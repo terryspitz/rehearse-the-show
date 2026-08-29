@@ -1,0 +1,42 @@
+# rehearse-the-show
+
+A web-based singing practice app for amateur musical theatre.
+
+Give it a song from a show, and it should let you: mix the volume of each
+instrument and each SATB vocal part independently, follow the lyrics, loop a
+tricky section, and count yourself in.
+
+**Status: research spike.** No app yet. What's here is the library research that
+decides the architecture, plus one working piece of the pipeline.
+
+## Contents
+
+- **[`docs/research-libraries.md`](docs/research-libraries.md)** — the main
+  document. Evaluates options for each stage: finding/downloading scores, PDF →
+  MusicXML (OMR), MusicXML → per-part MIDI, and the browser player. Includes a
+  recommended stack, a proposed architecture, and a riskiest-first build order.
+- **[`spike/score_to_parts.py`](spike/score_to_parts.py)** — working, tested.
+  Splits a MusicXML score into one MIDI file per part and emits a `score.json`
+  with the measure/beat map and a syllable-level lyric timeline. That JSON is the
+  contract the player will consume.
+
+## Two findings worth reading before anything else
+
+1. **Automatically searching the web for vocal-score PDFs is the wrong stage 1.**
+   Musical theatre scores are rented per-production by MTI/Concord, not sold, and
+   essentially the whole canon is in copyright. The app should ingest the score
+   the user's production was legitimately shipped, and carry a public-domain
+   catalogue (IMSLP, CPDL) for the free tier. See §1 of the research doc.
+2. **SATB parts don't exist as separate parts in a vocal score.** The chorus is
+   notated with divisi on one or two staves, so getting a four-fader SATB mixer
+   needs a voice splitter, not just a part list. See §3.
+
+## Running the spike
+
+```bash
+pip install music21
+python spike/score_to_parts.py bach/bwv66.6 -o out/    # a music21 corpus score
+python spike/score_to_parts.py my-score.musicxml -o out/
+```
+
+Produces `out/parts/*.mid`, `out/mix.mid` and `out/score.json`.
