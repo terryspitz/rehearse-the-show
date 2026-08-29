@@ -19,6 +19,9 @@ decides the architecture, plus one working piece of the pipeline.
   Splits a MusicXML score into one MIDI file per part and emits a `score.json`
   with the measure/beat map and a syllable-level lyric timeline. That JSON is the
   contract the player will consume.
+- **[`spike/render_demo.py`](spike/render_demo.py)** — renders listenable
+  practice mixes offline (full mix / my part forward / my part alone with a
+  click), proving the mixer end to end before any browser code exists.
 
 ## Two findings worth reading before anything else
 
@@ -40,3 +43,17 @@ python spike/score_to_parts.py my-score.musicxml -o out/
 ```
 
 Produces `out/parts/*.mid`, `out/mix.mid` and `out/score.json`.
+
+To hear it — renders each part separately, then mixes them at different gains,
+which is exactly what the browser mixer will do live:
+
+```bash
+apt-get install fluidsynth fluid-soundfont-gm ffmpeg
+python spike/render_demo.py bach/bwv10.7 -o demo/
+```
+
+Produces `demo/full-mix.mp3`, `demo/tenor-forward.mp3` and
+`demo/tenor-alone-with-click.mp3`. Voices are rendered with the GM Choir Aahs
+patch and panned across the stereo field (S left → B right) so a soloed line
+sounds like a singer and stays separable by ear in the full mix — the thing the
+old MIDI-beep choral sites get wrong.
