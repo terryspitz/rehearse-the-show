@@ -1,5 +1,6 @@
 out/
 demo/
+licensed/
 __pycache__/
 *.pyc
 .venv/

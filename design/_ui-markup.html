@@ -1,0 +1,411 @@
+<div class="shell">
+  <header class="top">
+    <div class="eyebrow">Rehearsal mix · Bar-by-bar</div>
+    <div class="songrow">
+      <div class="song" id="songTitle">Luck Be A Lady</div>
+      <div class="keysig">Guys &amp; Dolls</div>
+    </div>
+    <div class="counter">
+      <div class="bigbar"><span id="barNum">1</span><small>/<span id="barTot">22</span></small></div>
+      <div class="beats" id="beats"></div>
+    </div>
+  </header>
+
+  <main class="body">
+    <div class="notice">
+      <span><b>Demo audio is a Bach chorale</b> (BWV 10.7, public domain), not your show —
+      publishing licensed stems to a hosted page would be distribution. Every control below
+      is live. Your <i>Guys and Dolls</i> layout is the same shape: Sky, Tenor, Bass, Piano.</span>
+    </div>
+    <section class="block">
+      <h2>I'm singing</h2>
+      <div class="parts-pick" id="myPart"></div>
+    </section>
+
+    <section class="block">
+      <h2>Balance</h2>
+      <div class="chips" id="presets"></div>
+    </section>
+
+    <section class="block">
+      <div class="h2row">
+        <h2>Mixer</h2>
+        <button class="mini" id="panBtn" aria-pressed="false">Stereo</button>
+      </div>
+      <div class="mixer" id="mixer"></div>
+    </section>
+
+    <section class="block">
+      <h2>Words</h2>
+      <div class="lyr" id="lyrics">
+        <div class="who" id="lyrWho">Soprano</div>
+        <div class="line now" id="lyrNow">—</div>
+        <div class="line" id="lyrNext"></div>
+      </div>
+    </section>
+
+    <section class="note">
+      <p><b>This is a working prototype, not the finished app.</b> The faders, panning,
+      solo/mute, presets, looping and count-in are all live — they drive real Web Audio
+      gain and pan nodes, which is exactly how the real player will work.</p>
+      <p>The stems came out of the pipeline in this repo — four separate SATB parts plus a
+      piano reduction, rendered to audio and mixed live in the browser. <b>Stereo</b> reveals a
+      pan control per part: spatial separation buys up to 18 dB of "release from masking", which
+      is the cheapest way to make one line audible inside a chord.</p>
+      <p><b>Tempo</b> here resamples the audio, so it shifts pitch — a prototype
+      shortcut. The real player synthesises from MIDI, where tempo and pitch are
+      independent controls.</p>
+    </section>
+  </main>
+
+  <div class="tp">
+    <div class="loopbar">
+      <button class="loopbtn" id="loopBtn" aria-pressed="false">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 01-4 4H3"/></svg>
+        <span id="loopLbl">Loop</span>
+      </button>
+      <input type="range" class="scrub" id="scrub" min="0" max="1000" value="0" aria-label="Position">
+      <button class="loopbtn" id="clickBtn" aria-pressed="true" title="Count-in and click">Click</button>
+    </div>
+    <div class="tpmain">
+      <button class="play" id="play" aria-label="Play">
+        <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="tpmeta">
+        <div class="time"><span id="tCur">0:00</span> / <span id="tTot">0:44</span><span id="loopInfo"></span></div>
+        <div class="tempo">
+          <input type="range" id="tempo" min="60" max="120" value="100" aria-label="Tempo">
+          <div class="val" id="tempoVal">100%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = __DATA__;
+
+const PARTS = [
+  {id:"soprano", letter:"S", name:"Soprano", who:"Top line",         hue:"var(--p-s)", pan:-0.55},
+  {id:"alto",    letter:"A", name:"Alto",    who:"Second line",      hue:"var(--p-a)", pan:-0.2},
+  {id:"tenor",   letter:"T", name:"Tenor",   who:"Third line",       hue:"var(--p-t)", pan: 0.2},
+  {id:"bass",    letter:"B", name:"Bass",    who:"Bottom line",      hue:"var(--p-b)", pan: 0.55},
+  {id:"piano",   letter:"P", name:"Piano",   who:"Accompaniment",    hue:"var(--p-k)", pan: 0}
+];
+
+const PRESETS = [
+  {id:"full",  label:"Full mix",      hint:"Everything, evenly balanced"},
+  {id:"loud",  label:"Mine louder",   hint:"Your line on top, others underneath"},
+  {id:"only",  label:"Mine only",     hint:"Your line alone with the piano"},
+  {id:"drop",  label:"Drop mine",     hint:"Everyone but you — sing your own line"},
+  {id:"wide",  label:"Spread out",    hint:"Parts pushed apart across the stereo field"}
+];
+
+let ctx = null, buffers = {}, nodes = {}, sources = {};
+let playing = false, startCtxTime = 0, startPos = 0, raf = 0;
+let myPart = "tenor", activePreset = "full", loopOn = false, clickOn = true;
+let loopA = 4, loopB = 11;            // bar indices
+let rate = 1;
+const state = {};                     // id -> {vol, pan, mute, solo}
+PARTS.forEach(p => state[p.id] = {vol:0.85, pan:p.pan, mute:false, solo:false});
+
+const bars = DATA.measures.map(m => m.seconds);
+const DUR = DATA.duration;
+const beatsPerBar = DATA.measures[0].beats || 4;
+const $ = s => document.querySelector(s);
+
+/* ---------- build the mixer ---------- */
+function buildMixer(){
+  $("#mixer").innerHTML = PARTS.map(p => `
+    <div class="ch" id="ch-${p.id}" style="--hue:${p.hue}">
+      <div class="chead">
+        <div class="badge">${p.letter}</div>
+        <div>
+          <div class="cname">${p.name}</div>
+          <div class="cwho" id="who-${p.id}">${p.who}</div>
+        </div>
+        <div class="btns">
+          <button class="tog" data-solo="${p.id}" aria-pressed="false" title="Solo ${p.name}">S</button>
+          <button class="tog" data-mute="${p.id}" aria-pressed="false" title="Mute ${p.name}">M</button>
+        </div>
+      </div>
+      <div class="faderow">
+        <input type="range" data-vol="${p.id}" min="0" max="100" value="85" aria-label="${p.name} volume">
+        <div class="val" id="v-${p.id}">85</div>
+      </div>
+      <div class="panrow">
+        <div class="panlab">Pan</div>
+        <input type="range" data-pan="${p.id}" min="-100" max="100" value="${p.pan*100}" aria-label="${p.name} pan">
+        <div class="val" id="p-${p.id}">${panLabel(p.pan)}</div>
+      </div>
+    </div>`).join("");
+
+  $("#myPart").innerHTML = PARTS.filter(p => p.id !== "piano").map(p => `
+    <button class="pick" data-my="${p.id}" aria-pressed="${p.id===myPart}" style="color:${p.hue}">
+      <b>${p.letter}</b><span>${p.name.slice(0,4)}</span>
+    </button>`).join("") +
+    `<button class="pick" data-my="none" aria-pressed="false"><b>·</b><span>None</span></button>`;
+
+  $("#presets").innerHTML = PRESETS.map(p =>
+    `<button class="chip" data-preset="${p.id}" aria-pressed="${p.id===activePreset}" title="${p.hint}">${p.label}</button>`
+  ).join("");
+
+  $("#beats").innerHTML = Array.from({length:beatsPerBar},
+    (_,i)=>`<div class="beat${i===0?" one":""}" data-beat="${i}"></div>`).join("");
+  $("#barTot").textContent = bars.length;
+}
+
+const panLabel = v => Math.abs(v) < 0.03 ? "C"
+  : (v < 0 ? "L" : "R") + Math.round(Math.abs(v)*100);
+
+/* ---------- audio ---------- */
+async function ensureAudio(){
+  if (ctx) return;
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  await Promise.all(PARTS.map(async p => {
+    const bin = atob(DATA.audio[p.id]);
+    const arr = new Uint8Array(bin.length);
+    for (let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+    buffers[p.id] = await ctx.decodeAudioData(arr.buffer);
+    const gain = ctx.createGain(), pan = ctx.createStereoPanner();
+    gain.connect(pan); pan.connect(ctx.destination);
+    nodes[p.id] = {gain, pan};
+  }));
+  applyMix();
+}
+
+function audibleGain(id){
+  const anySolo = PARTS.some(p => state[p.id].solo);
+  const s = state[id];
+  if (s.mute) return 0;
+  if (anySolo && !s.solo) return 0;
+  return s.vol;
+}
+
+function applyMix(){
+  PARTS.forEach(p => {
+    const s = state[p.id], g = audibleGain(p.id);
+    if (nodes[p.id]){
+      nodes[p.id].gain.gain.setTargetAtTime(g, ctx.currentTime, 0.02);
+      nodes[p.id].pan.pan.setTargetAtTime(s.pan, ctx.currentTime, 0.02);
+    }
+    const el = document.getElementById("ch-"+p.id);
+    if (el) el.classList.toggle("off", g === 0);
+    const v = document.getElementById("v-"+p.id);
+    if (v) v.textContent = Math.round(s.vol*100);
+    const pv = document.getElementById("p-"+p.id);
+    if (pv) pv.textContent = panLabel(s.pan);
+    const vs = document.querySelector(`[data-vol="${p.id}"]`);
+    if (vs && +vs.value !== Math.round(s.vol*100)) vs.value = Math.round(s.vol*100);
+    const ps = document.querySelector(`[data-pan="${p.id}"]`);
+    if (ps && +ps.value !== Math.round(s.pan*100)) ps.value = Math.round(s.pan*100);
+    document.querySelector(`[data-solo="${p.id}"]`).setAttribute("aria-pressed", s.solo);
+    document.querySelector(`[data-mute="${p.id}"]`).setAttribute("aria-pressed", s.mute);
+  });
+}
+
+function position(){
+  if (!ctx) return startPos;
+  return playing ? startPos + (ctx.currentTime - startCtxTime) * rate : startPos;
+}
+
+function stopSources(){
+  Object.values(sources).forEach(s => { try{ s.stop(); }catch(e){} });
+  sources = {};
+}
+
+function startSources(at){
+  stopSources();
+  PARTS.forEach(p => {
+    const src = ctx.createBufferSource();
+    src.buffer = buffers[p.id];
+    src.playbackRate.value = rate;
+    src.connect(nodes[p.id].gain);
+    src.start(0, Math.max(0, Math.min(at, buffers[p.id].duration - 0.01)));
+    sources[p.id] = src;
+  });
+  startCtxTime = ctx.currentTime;
+  startPos = at;
+}
+
+/* ---------- metronome ---------- */
+function tick(strong){
+  if (!clickOn || !ctx) return;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.value = strong ? 1600 : 1100;
+  g.gain.setValueAtTime(strong ? 0.16 : 0.09, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0005, ctx.currentTime + 0.06);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime + 0.07);
+}
+
+async function play(){
+  await ensureAudio();
+  if (ctx.state === "suspended") await ctx.resume();
+  const from = loopOn ? Math.max(position(), bars[loopA]) : position();
+  const at = (loopOn && (from < bars[loopA] || from >= bars[loopB])) ? bars[loopA] : from;
+  if (clickOn){
+    const spb = barLen(0) / beatsPerBar;
+    for (let i=0;i<beatsPerBar;i++) setTimeout(()=>tick(i===0), i*spb*1000/rate);
+    setTimeout(()=>reallyStart(at), beatsPerBar*spb*1000/rate);
+  } else reallyStart(at);
+  playing = true; setPlayIcon(true);
+}
+function reallyStart(at){ if (playing){ startSources(at); loopFrame(); } }
+
+function pause(){
+  const p = position();
+  stopSources(); playing = false; startPos = Math.min(p, DUR);
+  cancelAnimationFrame(raf); setPlayIcon(false); render();
+}
+
+const barLen = i => (i+1 < bars.length ? bars[i+1] : DUR) - bars[i];
+function setPlayIcon(on){
+  $("#playIcon").innerHTML = on ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+  $("#play").setAttribute("aria-label", on ? "Pause" : "Play");
+}
+
+let lastBeat = -1;
+function loopFrame(){
+  const pos = position();
+  if (loopOn && pos >= bars[loopB]) { startSources(bars[loopA]); lastBeat = -1; }
+  else if (pos >= DUR) { pause(); startPos = 0; render(); return; }
+  render();
+  const bi = barIndex(pos);
+  const b = Math.floor((pos - bars[bi]) / (barLen(bi)/beatsPerBar));
+  const key = bi*100+b;
+  if (key !== lastBeat){ lastBeat = key; if (clickOn && playing) tick(b===0); }
+  raf = requestAnimationFrame(loopFrame);
+}
+
+function barIndex(pos){
+  let i = 0;
+  while (i+1 < bars.length && bars[i+1] <= pos) i++;
+  return i;
+}
+
+/* ---------- render ---------- */
+function render(){
+  const pos = Math.min(position(), DUR);
+  const bi = barIndex(pos);
+  $("#barNum").textContent = bi + 1;
+  const within = (pos - bars[bi]) / (barLen(bi)/beatsPerBar);
+  const beat = Math.max(0, Math.min(beatsPerBar-1, Math.floor(within)));
+  document.querySelectorAll(".beat").forEach((el,i)=>
+    el.classList.toggle("on", playing && i === beat));
+  $("#tCur").textContent = fmt(pos);
+  const sc = $("#scrub");
+  if (document.activeElement !== sc) sc.value = Math.round(pos/DUR*1000);
+  renderLyrics(pos);
+}
+const fmt = s => Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+
+const LY = DATA.lyrics;
+function renderLyrics(pos){
+  let idx = -1;
+  for (let i=0;i<LY.length;i++) if (LY[i].seconds <= pos + 0.001) idx = i;
+  const lo = Math.max(0, idx-5), hi = Math.min(LY.length, idx+7);
+  $("#lyrNow").innerHTML = LY.slice(lo, hi).map((l,i)=>{
+    const real = lo+i, sung = real <= idx;
+    const sp = (l.syllabic === "begin" || l.syllabic === "middle") ? "" : " ";
+    return `<span class="syl${sung?" sung":""}">${l.text}</span>${sp}`;
+  }).join("");
+  $("#lyrWho").textContent = DATA.lyricPart + " line";
+}
+
+/* ---------- presets ---------- */
+function applyPreset(id){
+  activePreset = id;
+  const mine = myPart;
+  PARTS.forEach(p => {
+    const s = state[p.id], isMine = p.id === mine, isPiano = p.id === "piano";
+    s.mute = false; s.solo = false;
+    s.pan = p.pan;
+    if (id === "full")      s.vol = 0.85;
+    else if (id === "loud") s.vol = isMine ? 1 : (isPiano ? 0.5 : 0.28);
+    else if (id === "only") s.vol = isMine ? 1 : (isPiano ? 0.35 : 0);
+    else if (id === "drop") s.vol = isMine ? 0 : 0.9;
+    else if (id === "wide"){ s.vol = 0.85; s.pan = isPiano ? 0 : p.pan * 1.7; }
+    s.pan = Math.max(-1, Math.min(1, s.pan));
+  });
+  document.querySelectorAll("[data-preset]").forEach(b =>
+    b.setAttribute("aria-pressed", b.dataset.preset === id));
+  if (ctx) applyMix(); else applyMixNoAudio();
+  markMine();
+}
+function applyMixNoAudio(){
+  PARTS.forEach(p => {
+    const s = state[p.id];
+    document.getElementById("v-"+p.id).textContent = Math.round(s.vol*100);
+    document.getElementById("p-"+p.id).textContent = panLabel(s.pan);
+    document.querySelector(`[data-vol="${p.id}"]`).value = Math.round(s.vol*100);
+    document.querySelector(`[data-pan="${p.id}"]`).value = Math.round(s.pan*100);
+    document.getElementById("ch-"+p.id).classList.toggle("off", audibleGain(p.id) === 0);
+    document.querySelector(`[data-solo="${p.id}"]`).setAttribute("aria-pressed", s.solo);
+    document.querySelector(`[data-mute="${p.id}"]`).setAttribute("aria-pressed", s.mute);
+  });
+}
+function markMine(){
+  PARTS.forEach(p => {
+    const el = document.getElementById("ch-"+p.id);
+    el.classList.toggle("mine", p.id === myPart);
+    document.getElementById("who-"+p.id).textContent =
+      p.id === myPart ? "Your line" : p.who;
+  });
+  document.querySelectorAll("[data-my]").forEach(b =>
+    b.setAttribute("aria-pressed", b.dataset.my === myPart));
+}
+
+/* ---------- wiring ---------- */
+function wire(){
+  document.addEventListener("input", e => {
+    const t = e.target;
+    if (t.dataset.vol){ state[t.dataset.vol].vol = t.value/100; clearPreset(); refresh(); }
+    if (t.dataset.pan){ state[t.dataset.pan].pan = t.value/100; clearPreset(); refresh(); }
+    if (t.id === "scrub"){
+      const at = t.value/1000*DUR;
+      if (playing) startSources(at); else { startPos = at; render(); }
+    }
+    if (t.id === "tempo"){
+      rate = t.value/100;
+      $("#tempoVal").textContent = t.value + "%";
+      Object.values(sources).forEach(s => s.playbackRate.value = rate);
+      if (playing){ startPos = position(); startCtxTime = ctx.currentTime; }
+    }
+  });
+
+  document.addEventListener("click", async e => {
+    const t = e.target.closest("button"); if (!t) return;
+    if (t.dataset.solo){ const s = state[t.dataset.solo]; s.solo = !s.solo; clearPreset(); refresh(); }
+    if (t.dataset.mute){ const s = state[t.dataset.mute]; s.mute = !s.mute; clearPreset(); refresh(); }
+    if (t.dataset.my){ myPart = t.dataset.my; markMine(); if (activePreset) applyPreset(activePreset); }
+    if (t.dataset.preset) applyPreset(t.dataset.preset);
+    if (t.id === "play") playing ? pause() : play();
+    if (t.id === "loopBtn"){
+      loopOn = !loopOn;
+      t.setAttribute("aria-pressed", loopOn);
+      $("#loopLbl").textContent = loopOn ? `Bars ${loopA+1}–${loopB}` : "Loop";
+      $("#loopInfo").textContent = loopOn ? ` · looping ${loopA+1}–${loopB}` : "";
+      if (loopOn && playing) startSources(bars[loopA]);
+    }
+    if (t.id === "clickBtn"){ clickOn = !clickOn; t.setAttribute("aria-pressed", clickOn); }
+    if (t.id === "panBtn"){
+      const on = t.getAttribute("aria-pressed") !== "true";
+      t.setAttribute("aria-pressed", on);
+      $("#mixer").classList.toggle("showpan", on);
+    }
+  });
+}
+function clearPreset(){
+  activePreset = null;
+  document.querySelectorAll("[data-preset]").forEach(b => b.setAttribute("aria-pressed", false));
+}
+function refresh(){ ctx ? applyMix() : applyMixNoAudio(); }
+
+buildMixer();
+wire();
+applyPreset("full");
+markMine();
+$("#tTot").textContent = fmt(DUR);
+render();
+</script>
