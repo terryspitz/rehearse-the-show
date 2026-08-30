@@ -39,7 +39,7 @@ most of the page width). Total: **79 staves across the 10 pages**.
 |---|---|
 | **homr 0.7.0** | Ran on all 10 pages. ~15–40 s/page on CPU. Needed a venv — `antlr4-python3-runtime` won't build against Ubuntu's patched system setuptools (`AttributeError: install_layout`). |
 | **oemer** | Ran on one page, but only after two fixes. Current `onnxruntime` 1.29 rejects the bundled model outright (`ConvTranspose ... Attribute pads must not contain negative values`), so it needs pinning to ≤1.20; and `bbox.find_lines` crashes on OpenCV 5, which changed `HoughLinesP`'s return from Nx1x4 to Nx4. With both patched it takes **3m56s per page**, ~16× homr. |
-| **Audiveris 5.9** | **Could not be tested in this environment.** Its build needs `javax.media:jai-core:1.1.3`, which is not on Maven Central and lives on `repository.jboss.org` — blocked by this sandbox's network policy (403 at CONNECT). This is an environment limitation, not a defect in Audiveris, and it leaves the engine the research doc *recommended* untested. See §5. |
+| **Audiveris 5.9.0** | Ran, after clearing two build blockers. (1) `javax.media:jai-core:1.1.3` is not on Maven Central and lives on `repository.jboss.org`, which this sandbox's network policy blocks — but **no Audiveris source file imports `javax.media.jai`**; it is declared only for the JPEG2000 codec, so deleting that one line in `app/build.gradle` resolves the graph, at the cost of JPEG2000 input that scanned scores don't use. (2) 5.9.0 needs JDK 25 (`invalid source release: 25`); `openjdk-25-jdk-headless` is in the Ubuntu archive. Batch mode then works headless: ~30 s/page. |
 
 ## 3. homr results, all 10 pages
 
@@ -111,7 +111,40 @@ losing divisi entirely and needing two source patches just to execute, **oemer
 is not a candidate.** This matches its author's own pointer to homr as the
 successor project.
 
-### Finding 5 — nothing is *named*, and divisi lands on the wrong part
+### Finding 5 — Audiveris is the only engine that reads words and part names
+
+This is the result that matters, and it reverses the interim conclusion. On
+pages 216 and 220 Audiveris produced:
+
+- **Lyrics — around 38 syllables across the two pages**, syllabified, attached
+  to notes. OCR quality is mediocre (`yﬂu'vc` for "you've", `tn` for "to",
+  `151` for "be", `ﬂy` for "dy") but the text is recognisably there and
+  correctable: `Luck if yﬂu'vc av er been la ﬂy to be gin with`. Compare zero
+  from both other engines, on every page.
+- **Part names read off the staff labels** — parts correctly named `T` and `B`,
+  plus several variants of the `Ens.` bracket label OCR'd as `Ell.`, `Elsi.`,
+  `E15.`, `En.`. Imperfect, but it is *reading the labels at all*, which is the
+  information the mixer needs and which neither other engine attempts.
+- **Three-staff parts modelled as such** — the log shows
+  `Part#1{ staves[3] configs:[5]}`, i.e. it understands a bracketed group of
+  three staves as one structure.
+
+Its failure here is **over-segmentation**: 9 logical parts across two pages
+where there should be 3. The varying system layout makes it create new logical
+parts rather than matching staves to existing ones — the same underlying
+difficulty that defeats homr, failing in the opposite direction.
+
+**That direction matters enormously.** Merging over-segmented parts in a review
+UI is a few clicks. Un-interleaving three parts that have been concatenated
+end-to-end, as homr does on page 216, is not recoverable at all — the
+information about what was simultaneous is simply gone. An engine that splits
+too much is a usable starting point; an engine that flattens is not.
+
+It is not clean: one `NullPointerException` while exporting a fermata
+(`PartwiseBuilder.processFermata`) was logged, though the export still
+completed.
+
+### Finding 6 — nothing homr produces is *named*, and divisi lands on the wrong part
 
 homr labels its output `Voice`, `Piano`, `Piano`. There is no `Sky` / `T` / `B`,
 because the engine doesn't read the staff labels. Worse, on page 220 the divisi
@@ -123,10 +156,9 @@ answer to the question the research doc left open.
 
 ## 4. What this changes about the plan
 
-**The "upload a PDF, get a mixer" flow does not work today.** Not because of
-note accuracy — that's decent — but because the two things the mixer needs
-most, *which line is which* and *what the words are*, are exactly the two
-things this engine doesn't produce.
+**"Upload a PDF, get a mixer with no human in the loop" does not work today.**
+Note accuracy is fine. What no engine gets fully right is the *structure* —
+which line is which — and only Audiveris gets the lyrics at all.
 
 Three consequences, in order of importance:
 
@@ -139,16 +171,11 @@ Three consequences, in order of importance:
    printed text at a predictable vertical offset. A targeted OCR pass (Tesseract
    on the strip between staves, aligned to notehead x-positions) is a tractable
    piece of work and probably more reliable than hoping an OMR engine does it.
-3. **Audiveris moves from "default choice" to "must test".** It is the only
-   candidate that models part-groups and brackets — the exact thing that breaks
-   here — and it runs OCR for lyrics. Both known failures are in its wheelhouse.
-   Until it is tested, the OMR stage has no proven engine.
-
-   Note on the blocked build: `javax.media:jai-core` is declared in
-   `app/build.gradle` but **no Audiveris source file imports `javax.media.jai`** —
-   it is there for the JPEG2000 codec in `jai-imageio-jpeg2000`. Dropping that
-   one line lets the build resolve, at the cost of JPEG2000 input support, which
-   scanned scores don't use.
+3. **Audiveris is the engine to build on**, confirmed rather than assumed. It
+   is the only one that reads lyrics and staff labels, and its structural
+   failure mode (over-segmenting parts) is recoverable in review where homr's
+   (flattening parts into sequence) is not. Budget work for merging its logical
+   parts and for cleaning up its lyric OCR — not for replacing it.
 
 **The divisi problem is real but is not the blocker.** The bigger one is
 mixed-staff-count systems, which I hadn't anticipated and which is more common
