@@ -38,7 +38,7 @@ most of the page width). Total: **79 staves across the 10 pages**.
 | Engine | Result |
 |---|---|
 | **homr 0.7.0** | Ran on all 10 pages. ~15–40 s/page on CPU. Needed a venv — `antlr4-python3-runtime` won't build against Ubuntu's patched system setuptools (`AttributeError: install_layout`). |
-| **oemer** | Runs only with `onnxruntime` pinned (≤1.20). Current onnxruntime 1.29 rejects the bundled model outright: `Node (model/conv2d_transpose_1/conv2d_transpose) Op (ConvTranspose) [ShapeInferenceError] Attribute pads must not contain negative values`. Even then it is extremely slow — >20 min on a single page, versus homr's 15 s. |
+| **oemer** | Ran on one page, but only after two fixes. Current `onnxruntime` 1.29 rejects the bundled model outright (`ConvTranspose ... Attribute pads must not contain negative values`), so it needs pinning to ≤1.20; and `bbox.find_lines` crashes on OpenCV 5, which changed `HoughLinesP`'s return from Nx1x4 to Nx4. With both patched it takes **3m56s per page**, ~16× homr. |
 | **Audiveris 5.9** | **Could not be tested in this environment.** Its build needs `javax.media:jai-core:1.1.3`, which is not on Maven Central and lives on `repository.jboss.org` — blocked by this sandbox's network policy (403 at CONNECT). This is an environment limitation, not a defect in Audiveris, and it leaves the engine the research doc *recommended* untested. See §5. |
 
 ## 3. homr results, all 10 pages
@@ -91,7 +91,27 @@ cadence), and the 5-flat key signature is correct. Divisi chords survive *as
 chords* — 12 of them on page 220, in the 2- and 3-note sizes the score actually
 has.
 
-### Finding 4 — but nothing is *named*, and divisi lands on the wrong part
+### Finding 4 — oemer is worse here on every axis
+
+With both compatibility fixes applied, oemer on page 220 (ground truth: 3 staves,
+12 bars, one key signature of 5 flats, ~12 divisi chords):
+
+| | Ground truth | homr | oemer |
+|---|---|---|---|
+| Parts | 3 | **3** ✅ | 2 ❌ |
+| Measures | 12 | **12** ✅ | 14 ❌ |
+| Key signatures on the page | 1 (−5) | **−5** ✅ | −6, −2, +5, +6 ❌ |
+| Divisi preserved as chords | ~12 | 12 (wrong part) | **0** ❌ |
+| Lyrics | many | 0 ❌ | 0 ❌ |
+| Time per page | — | ~15 s | 3m56s |
+
+Finding four different key signatures on a page that has one is the telling
+number: it means accidentals are being mis-assigned wholesale. Combined with
+losing divisi entirely and needing two source patches just to execute, **oemer
+is not a candidate.** This matches its author's own pointer to homr as the
+successor project.
+
+### Finding 5 — nothing is *named*, and divisi lands on the wrong part
 
 homr labels its output `Voice`, `Piano`, `Piano`. There is no `Sky` / `T` / `B`,
 because the engine doesn't read the staff labels. Worse, on page 220 the divisi
@@ -122,8 +142,13 @@ Three consequences, in order of importance:
 3. **Audiveris moves from "default choice" to "must test".** It is the only
    candidate that models part-groups and brackets — the exact thing that breaks
    here — and it runs OCR for lyrics. Both known failures are in its wheelhouse.
-   Until it's tested on a machine that can reach the JBoss repo, the OMR stage
-   has no proven engine.
+   Until it is tested, the OMR stage has no proven engine.
+
+   Note on the blocked build: `javax.media:jai-core` is declared in
+   `app/build.gradle` but **no Audiveris source file imports `javax.media.jai`** —
+   it is there for the JPEG2000 codec in `jai-imageio-jpeg2000`. Dropping that
+   one line lets the build resolve, at the cost of JPEG2000 input support, which
+   scanned scores don't use.
 
 **The divisi problem is real but is not the blocker.** The bigger one is
 mixed-staff-count systems, which I hadn't anticipated and which is more common
