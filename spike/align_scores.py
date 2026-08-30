@@ -6,8 +6,11 @@ measures from 1 per movement, so the printed numbers don't survive the parse.
 Instead this aligns on *musical anchors* — the bars where the key or time
 signature changes — which are unmistakable landmarks that both scans share.
 
-It reports the offset it found and how well the anchors agree, so a bad
-alignment is visible rather than silent.
+The two books do NOT differ by a constant offset. Each printed "N bars rest"
+in the vocal book collapses to a single measure in the parse, so the vocal
+score falls progressively further behind the piano. The alignment is therefore
+a monotonic warp: anchors are matched in sequence, and the result is a
+piecewise-linear bar map with a different local offset in each segment.
 
 Usage:
     python spike/align_scores.py vocal.mxl piano.mxl [more-vocal.mxl ...]
@@ -38,16 +41,35 @@ def anchors(score: stream.Score) -> tuple[list[tuple[int, str]], int]:
     return found, len(measures)
 
 
-def best_offset(vocal: list[tuple[int, str]], piano: list[tuple[int, str]],
-                span: int) -> tuple[int, int, int]:
-    """Offset maximising matching anchors. Returns (offset, matched, possible)."""
-    labels_v = {i: lab for i, lab in vocal}
-    best = (0, -1, len(piano))
-    for off in range(-span, span + 1):
-        hits = sum(1 for i, lab in piano if labels_v.get(i + off) == lab)
-        if hits > best[1]:
-            best = (off, hits, len(piano))
-    return best
+def match_sequence(vocal, piano):
+    """Align two anchor sequences in order (LCS on labels). Returns matched pairs."""
+    V, P = len(vocal), len(piano)
+    table = [[0] * (P + 1) for _ in range(V + 1)]
+    for i in range(V - 1, -1, -1):
+        for j in range(P - 1, -1, -1):
+            table[i][j] = (table[i + 1][j + 1] + 1 if vocal[i][1] == piano[j][1]
+                           else max(table[i + 1][j], table[i][j + 1]))
+    pairs, i, j = [], 0, 0
+    while i < V and j < P:
+        if vocal[i][1] == piano[j][1]:
+            pairs.append((vocal[i][0], piano[j][0], vocal[i][1]))
+            i += 1; j += 1
+        elif table[i + 1][j] >= table[i][j + 1]:
+            i += 1
+        else:
+            j += 1
+    return pairs
+
+
+def bar_map(pairs, v_bars, p_bars):
+    """Piecewise-linear vocal-bar -> piano-bar map through the matched anchors."""
+    knots = [(0, 0)] + [(v, p) for v, p, _ in pairs] + [(v_bars, p_bars)]
+    seen, clean = set(), []
+    for v, p in knots:
+        if v not in seen:
+            seen.add(v); clean.append((v, p))
+    clean.sort()
+    return clean
 
 
 def main() -> int:
@@ -72,14 +94,26 @@ def main() -> int:
     print(f"  piano  {Path(args.piano).name}: {p_bars} bars, "
           f"anchors {[f'{i}:{l}' for i, l in p_anchors]}")
 
-    off, matched, possible = best_offset(v_anchors, p_anchors, args.span)
+    pairs = match_sequence(v_anchors, p_anchors)
     print(f"\n  vocal bars {v_bars}  vs  piano bars {p_bars}  (difference {v_bars - p_bars:+d})")
-    print(f"  best offset: {off:+d} bars — {matched}/{possible} anchors agree")
+    print(f"  matched {len(pairs)}/{min(len(v_anchors), len(p_anchors))} anchors in sequence\n")
+    print(f"  {'anchor':<12}{'vocal':>7}{'piano':>7}{'drift':>7}")
+    for v, pb, lab in pairs:
+        print(f"  {lab:<12}{v:>7}{pb:>7}{pb - v:>+7}")
 
-    if possible and matched == possible and abs(v_bars - p_bars) <= 2:
-        print("  VERDICT: confident. Align piano bar n to vocal bar n%+d." % off)
-    elif matched >= max(1, possible // 2):
-        print("  VERDICT: partial. Some anchors agree; needs a human to confirm.")
+    knots = bar_map(pairs, v_bars, p_bars)
+    drifts = [pb - v for v, pb, _ in pairs]
+    monotonic = all(b >= a for a, b in zip(drifts, drifts[1:]))
+    frac = len(pairs) / max(1, min(len(v_anchors), len(p_anchors)))
+
+    print()
+    if frac >= 0.9 and monotonic:
+        print(f"  VERDICT: confident. Drift grows {drifts[0]:+d} -> {drifts[-1]:+d} bars, "
+              "monotonically — consistent with multi-bar rests collapsing in the vocal parse.")
+        print(f"  Use the piecewise map ({len(knots)} knots), not a fixed offset:")
+        print("    " + "  ".join(f"{v}->{pb}" for v, pb in knots))
+    elif frac >= 0.5:
+        print("  VERDICT: partial. Anchors mostly line up; a human should confirm the map.")
     else:
         print("  VERDICT: no reliable alignment — the two parses disagree too much.")
     return 0

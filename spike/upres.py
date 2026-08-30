@@ -77,16 +77,19 @@ def main() -> int:
     ap.add_argument("--interline", type=float, default=20.0,
                     help="target staff interline in px (Audiveris likes ~20)")
     ap.add_argument("--scale", type=float, default=0, help="fixed scale, overrides --interline")
-    ap.add_argument("--no-binarize", action="store_true")
+    ap.add_argument("--binarize", action="store_true",
+                    help="also Sauvola-threshold. Measured slightly WORSE than scaling "
+                         "alone on a 140 dpi JPEG — it recovered a few more syllables but "
+                         "cost key-signature accuracy. Off by default.")
     args = ap.parse_args()
 
     first = measure_interline(args.pages[0])
     scale = args.scale or (args.interline / first if first else 1.0)
     print(f"  measured interline {first:.1f} px -> scaling {scale:.2f}x "
           f"(target {args.interline:.0f} px)"
-          f"{'' if args.no_binarize else ', Sauvola binarization'}")
+          f"{', Sauvola binarization' if args.binarize else ''}")
 
-    imgs = [process(Path(p), scale, not args.no_binarize) for p in args.pages]
+    imgs = [process(Path(p), scale, args.binarize) for p in args.pages]
     print(f"  {len(imgs)} pages, output size {imgs[0].size}")
     imgs[0].save(args.out, save_all=True, append_images=imgs[1:], resolution=300.0)
     print(f"  wrote {args.out}")

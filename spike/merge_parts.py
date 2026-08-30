@@ -6,6 +6,17 @@ a show number that alternates solo and chorus writing comes back as a dozen
 fragments instead of three continuous lines. This folds them back together
 using two things Audiveris *does* get right: the OCR'd staff label and the clef.
 
+Routing uses three signals, in order of reliability:
+
+  1. **Clef.** A bass-clef part is the bass line. Unambiguous.
+  2. **Whether a label was read at all.** In a show vocal book the solo staff
+     carries no printed label, so Audiveris leaves it as its default "Voice";
+     the ensemble staves are labelled (T, B, Ens.) so *something* is OCR'd, even
+     if it comes out as "Bus." or "£13." or "'I'". Presence of a label is a far
+     more robust signal than its content — the manglings change completely
+     between scans of the same page.
+  3. **Label text**, only to override the above when it is unambiguous.
+
 This is the automated half of the review step. A human still confirms it.
 
 Usage:
@@ -20,23 +31,26 @@ from pathlib import Path
 
 from music21 import chord, clef, instrument, midi, note, stream
 
-# Audiveris OCRs the bracket label "Ens." as Ell./Elsi./E15./En./Els. and so on,
-# and mangles T and B less often. Match generously, then fall back to clef.
-LABEL_RULES = [
-    ("tenor", r"^t$|^ten|^e[l1][l1s5]|^en\.?$|^els"),
-    ("bass",  r"^b|^11$"),
-]
+UNLABELLED = {"", "voice", "piano", "part"}   # Audiveris defaults = no label was read
 
 
 def route(part: stream.Part) -> str:
-    name = (part.partName or "").strip().lower().replace("“", "").replace("‘", "")
-    for group, pattern in LABEL_RULES:
-        if re.search(pattern, name):
-            return group
+    """Which singable line does this Audiveris logical part belong to?
+
+    Three signals, most reliable first:
+      1. Clef — a bass-clef-only part is the bass line. Unambiguous.
+      2. Whether a label was read *at all*. The solo staff in a show vocal book
+         carries no printed label, so Audiveris leaves its default "Voice"; the
+         ensemble staves are labelled (T, B, Ens.) so something is OCR'd, even
+         when it comes out as "Bus." or "£13." or "'I'". Label *presence* is far
+         more robust than label *content*: the manglings change completely
+         between two scans of the same page, but the presence does not.
+    """
     clefs = {type(c) for c in part.recurse().getElementsByClass(clef.Clef)}
     if clef.BassClef in clefs and clef.TrebleClef not in clefs:
         return "bass"
-    return "solo"
+    name = re.sub(r"[^a-z0-9]", "", (part.partName or "").lower())
+    return "solo" if name in UNLABELLED else "tenor"
 
 
 GROUPS = ["solo", "tenor", "bass"]

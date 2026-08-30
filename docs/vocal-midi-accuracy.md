@@ -104,3 +104,84 @@ Every defect above except the lyric OCR is plausibly a resolution artefact. The
 lyric errors are a separate, tractable job: a targeted Tesseract pass over the
 lyric band beneath each staff, with a song-specific word list, rather than
 general full-page OCR.
+
+---
+
+# Update: up-resing fixed most of this
+
+No higher-resolution vocal book was available, so the question became whether
+up-resing the scan we have would help. It does — substantially.
+
+## Why it works: it was a scale problem, not only an information one
+
+| | Staff interline |
+|---|---|
+| Vocal book, as supplied | **8 px** |
+| Piano score (parsed cleanly) | **20 px** |
+
+Audiveris estimates interline spacing and its symbol classifiers are built
+around roughly 20 px. At 8 px the vocal book sits far outside the engine's
+operating window. Scaling by 2.5× adds no new information, but it puts the
+input exactly where the piano score already was — which is why interpolation
+helps here despite the usual intuition that it can't.
+
+## Results, whole score, same engine and settings
+
+| | As supplied | Up-resed 2.5× |
+|---|---|---|
+| Bars | 154 | **176** (piano says 190) |
+| Notes | 619 | **769** |
+| Lyric syllables | 283 | **427** |
+| …of which clean | 179 (63%) | **380 (89%)** |
+| Key signatures | 7 distinct, 4 spurious | **3: −5, −3, +2 — exactly right** |
+| Bass notes ÷ tenor notes | 40% | **79%** |
+| Logical parts (truth: 3) | 20 | 21 — unchanged |
+
+Qualitatively: `Luck 151 a gun ﬂu man see` became
+`Stick with me, ba by, I'm the fel low you came in with`.
+
+## The clever step made it worse
+
+Sauvola adaptive thresholding was the obvious thing to try, since the piano PDF
+is bitonal and clean while the vocal is JPEG with ringing round every glyph. On
+the two test pages it recovered six more syllables but cost key-signature
+accuracy (3 distinct instead of the correct 2) and part count (9 vs 7). Plain
+Lanczos resizing wins. `spike/upres.py` therefore binarizes only on request.
+
+## Alignment now works
+
+With correct key signatures the two books line up — but not the way the first
+aligner assumed. All 10 anchors match **in sequence**, while the drift grows
+monotonically:
+
+```
+anchor      vocal  piano  drift
+key-5           0      0     +0
+time4/4        20     21     +1
+key+2          43     45     +2
+key-3          56     63     +7
+key-5          72     79     +7
+key+2         112    123    +11
+key-3         129    141    +12
+key-5         143    157    +14
+```
+
+That is not a constant offset — it is the vocal parse falling steadily behind
+as each printed multi-bar rest collapses to a single measure. `align_scores.py`
+now matches anchors as a sequence and emits a piecewise-linear bar map
+(`0→0  20→21  43→45  56→63  72→79  112→123  129→141  143→157  176→190`).
+
+## What up-resing did *not* fix
+
+**Part over-segmentation is unchanged** — 21 logical parts for 3 lines. That is
+structural, not a resolution artefact, exactly as predicted: Audiveris mints a
+new logical part whenever a system's staff count changes, and no amount of
+input quality alters that.
+
+It did, however, force a better solution. The label-text heuristic in
+`merge_parts.py` broke completely on the up-resed scan, because the OCR
+manglings changed: `Ens.` came out as `Bus.`, `Eu.`, `£13.`, and `T` as `'I'`.
+Matching that text is a losing game. What is stable is that **the solo staff
+carries no printed label at all**, so Audiveris leaves its default "Voice",
+while every ensemble staff is labelled and yields *something*. Routing on label
+*presence* plus clef, rather than label content, survives both scans.
