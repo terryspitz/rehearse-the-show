@@ -144,7 +144,32 @@ It is not clean: one `NullPointerException` while exporting a fermata
 (`PartwiseBuilder.processFermata`) was logged, though the export still
 completed.
 
-### Finding 6 — nothing homr produces is *named*, and divisi lands on the wrong part
+### Finding 6 — the full-score comparison
+
+All 10 pages, both viable engines, against ground truth:
+
+| | Ground truth | homr | Audiveris 5.9 |
+|---|---|---|---|
+| Notes | — | 620 | **619** |
+| **Lyric syllables** | ~300 | **0** | **283** |
+| Divisi kept as chords | present | 41 (wrong parts) | 16 |
+| Logical parts | 3 (Sky, `T`, `B`) | 18 | 20 |
+| Staff labels read | `Sky`, `T`, `B`, `Ens.` | none | `T`, `B`, and `Ens.` as `Ell.`/`Els.`/`E15.`/`En.` |
+| Time | — | ~15 s/page | ~30 s/page |
+
+The note yield is a dead heat — 619 against 620. Everything that separates them
+is structure and text, and there Audiveris wins outright: **283 syllables against
+zero**, plus real staff labels.
+
+Audiveris also split the score into two "movements" at a key change, which is
+harmless: movement 1 is the 40-bar opening solo section as a **single correct
+part with 74 syllables attached**, exactly right. The over-segmentation is all
+in movement 2, where the ensemble writing starts.
+
+Neither engine gets the part count right. But 20-parts-to-merge is an afternoon
+in a review UI; homr's page-216 output is unrecoverable.
+
+### Finding 7 — nothing homr produces is *named*, and divisi lands on the wrong part
 
 homr labels its output `Voice`, `Piano`, `Piano`. There is no `Sky` / `T` / `B`,
 because the engine doesn't read the staff labels. Worse, on page 220 the divisi

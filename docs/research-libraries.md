@@ -165,13 +165,14 @@ thing that kills the product, buying it is a legitimate answer.
 
 ### Verdict on stage 2
 
-> **Update — this has now been tested.** See
-> [omr-evaluation.md](omr-evaluation.md) for results on a real *Guys and Dolls*
-> vocal book. Short version: homr's note data is decent, but it extracts **no
-> lyrics at all**, doesn't name its parts, and flattens any page whose systems
-> have differing staff counts into a single line. Audiveris remains untested
-> (its build is unreachable from this sandbox) and is now a must-test rather
-> than a default. The review step is load-bearing, not polish.
+> **Update — this has now been tested**, on a real *Guys and Dolls* vocal book.
+> See [omr-evaluation.md](omr-evaluation.md). Short version: **Audiveris is
+> confirmed as the right default**, on evidence. Over 10 pages it and homr tie
+> on notes (619 vs 620), but Audiveris extracts **283 lyric syllables to homr's
+> zero** and reads the staff labels. Both over- or under-segment the parts;
+> Audiveris errs by splitting, which a review UI can merge, while homr errs by
+> flattening simultaneous staves into sequence, which is unrecoverable. oemer is
+> out. The review step is load-bearing, not polish.
 
 Default to **Audiveris in batch mode** for uploaded PDFs (best part structure,
 handles multipage, exports lyrics), with **homr** available as a per-page second
