@@ -19,9 +19,16 @@ decides the architecture, plus one working piece of the pipeline.
   Splits a MusicXML score into one MIDI file per part and emits a `score.json`
   with the measure/beat map and a syllable-level lyric timeline. That JSON is the
   contract the player will consume.
+- **[`docs/omr-evaluation.md`](docs/omr-evaluation.md)** — the OMR bake-off run
+  against a real *Guys and Dolls* vocal book. What works, what doesn't, and what
+  it changes about the plan.
 - **[`spike/render_demo.py`](spike/render_demo.py)** — renders listenable
   practice mixes offline (full mix / my part forward / my part alone with a
   click), proving the mixer end to end before any browser code exists.
+- **[`spike/omr_report.py`](spike/omr_report.py)** — structural scorecard for an
+  OMR engine's MusicXML: parts, measures, chords, lyrics, clefs, key signatures.
+- **[`spike/gt_staves.py`](spike/gt_staves.py)** — counts staves in a page image
+  by horizontal projection, to get ground truth to judge OMR output against.
 
 ## Two findings worth reading before anything else
 
@@ -33,6 +40,10 @@ decides the architecture, plus one working piece of the pipeline.
 2. **SATB parts don't exist as separate parts in a vocal score.** The chorus is
    notated with divisi on one or two staves, so getting a four-fader SATB mixer
    needs a voice splitter, not just a part list. See §3.
+3. **OMR gives us notes but not the two things the mixer needs most** — which
+   line is which, and what the words are. Measured, not guessed: see the
+   [evaluation](docs/omr-evaluation.md). A human review step that maps staves to
+   voice parts is load-bearing, not optional polish.
 
 ## Running the spike
 

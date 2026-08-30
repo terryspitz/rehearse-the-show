@@ -32,19 +32,25 @@ SR = 44100
 
 # General MIDI programs. Choir Aahs for voices so a soloed line sounds like a
 # singer rather than a marimba — the thing CyberBass et al. get wrong.
-PROGRAM = {"soprano": 52, "alto": 52, "tenor": 52, "bass": 52, "voice": 52, "instrument": 0}
+PROGRAM = {"soprano": 52, "alto": 52, "tenor": 52, "bass": 52, "voice": 52,
+           "solo": 53, "instrument": 0}
 
 # Spread the voices across the stereo field so parts stay separable by ear even
 # in the full mix.
-PAN = {"soprano": -0.5, "alto": -0.18, "tenor": 0.18, "bass": 0.5}
+PAN = {"soprano": -0.5, "alto": -0.18, "solo": 0.0, "tenor": 0.18, "bass": 0.5}
 
-# name -> (description, {group: gain}, click?)
+# name -> (description, {group: gain}, click?). Groups absent from a score are
+# simply skipped, so the same presets work for SATB choral and for a show's
+# solo + male-chorus layout.
+FULL = {"soprano": 1.0, "alto": 1.0, "solo": 1.0, "tenor": 1.0, "bass": 1.0}
+QUIET = {k: 0.22 for k in FULL}
+
 MIXES = {
-    "full-mix": ("all four parts balanced", {"soprano": 1.0, "alto": 1.0, "tenor": 1.0, "bass": 1.0}, False),
-    "tenor-forward": ("tenor loud, other parts quiet underneath",
-                      {"soprano": 0.22, "alto": 0.22, "tenor": 1.0, "bass": 0.22}, False),
+    "full-mix": ("everything balanced", FULL, False),
+    "tenor-forward": ("tenor loud, everything else quiet underneath",
+                      {**QUIET, "tenor": 1.0}, False),
     "tenor-alone-with-click": ("tenor only, with a metronome count",
-                               {"soprano": 0.0, "alto": 0.0, "tenor": 1.0, "bass": 0.0}, True),
+                               {k: 0.0 for k in FULL} | {"tenor": 1.0}, True),
 }
 
 
@@ -116,6 +122,12 @@ def main() -> int:
     ap.add_argument("score", help="path to MusicXML, or a music21 corpus path")
     ap.add_argument("-o", "--out", default="demo", help="output directory")
     ap.add_argument("--soundfont", default="/usr/share/sounds/sf2/FluidR3_GM.sf2")
+    ap.add_argument(
+        "--assign", default="",
+        help="override the guessed part groups, e.g. '0=solo,1=tenor,2=bass'. "
+             "OMR output rarely names its parts, so this stands in for the "
+             "review step where a human maps staves to voices.",
+    )
     args = ap.parse_args()
 
     src = Path(args.score)
@@ -126,15 +138,25 @@ def main() -> int:
 
     measures = beat_map(score)
 
-    rendered: dict[str, np.ndarray] = {}
+    assigned = {}
+    for item in filter(None, args.assign.split(",")):
+        idx, _, group = item.partition("=")
+        assigned[int(idx)] = group.strip()
+
+    streams: dict[str, list[np.ndarray]] = {}
     for i, part in enumerate(score.parts):
         name, group = classify(part, i)
+        group = assigned.get(i, group)
         slug = f"{i:02d}-{slugify(name)}"
-        print(f"  rendering {name} ({group})")
-        rendered[group] = render_part(part, group, work / f"{slug}.mid", work / f"{slug}.wav", Path(args.soundfont))
+        print(f"  rendering {name} -> {group}")
+        audio = render_part(part, group, work / f"{slug}.mid", work / f"{slug}.wav", Path(args.soundfont))
+        streams.setdefault(group, []).append(audio)
 
-    length = max(len(a) for a in rendered.values())
-    padded = {g: np.pad(a, (0, length - len(a))) for g, a in rendered.items()}
+    length = max(len(a) for group in streams.values() for a in group)
+    padded = {
+        g: np.sum([np.pad(a, (0, length - len(a))) for a in items], axis=0)
+        for g, items in streams.items()
+    }
 
     for mix_name, (desc, gains, want_click) in MIXES.items():
         stereo = np.zeros((length, 2), dtype=np.float32)
