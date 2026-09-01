@@ -29,6 +29,14 @@
 
     <section class="block">
       <div class="h2row">
+        <h2>Tempo</h2>
+        <div class="tempolive" id="tempoLive">100%</div>
+      </div>
+      <div class="chips" id="sections"></div>
+    </section>
+
+    <section class="block">
+      <div class="h2row">
         <h2>Mixer</h2>
         <button class="mini" id="panBtn" aria-pressed="false">Stereo</button>
       </div>
@@ -52,9 +60,15 @@
       piano reduction, rendered to audio and mixed live in the browser. <b>Stereo</b> reveals a
       pan control per part: spatial separation buys up to 18 dB of "release from masking", which
       is the cheapest way to make one line audible inside a chord.</p>
-      <p><b>Tempo</b> here resamples the audio, so it shifts pitch — a prototype
-      shortcut. The real player synthesises from MIDI, where tempo and pitch are
-      independent controls.</p>
+      <p><b>Tempo is per section</b>, not one global number — <i>Luck Be A Lady</i> really
+      does change from rubato to a driving patter tempo mid-song, and slowing down the fast
+      bit shouldn't slow down the ballad. The two sections below are an honest stand-in —
+      this Bach chorale has no printed tempo change, so they're just "bars 1–11" / "12–22" —
+      but the mechanism is real: tap a section to jump there, drag the transport's <b>Tempo</b>
+      slider and it writes to whichever section the playhead is in, and playback hands off
+      to the next section's stored rate the instant it crosses the bar line, not by ramping.
+      It also resamples the audio here, so it shifts pitch — a prototype shortcut. The real
+      player synthesises from MIDI, where tempo and pitch are independent.</p>
     </section>
   </main>
 
@@ -114,6 +128,23 @@ const DUR = DATA.duration;
 const beatsPerBar = DATA.measures[0].beats || 4;
 const $ = s => document.querySelector(s);
 
+/* Tempo is scoped per section, not global. This demo score has no printed
+   tempo change, so the split below is an honest stand-in (bars 1-11 /
+   12-22) rather than invented musical terms — but the mechanism (jump to a
+   section, drag Tempo, it writes only to that section, playback hands off
+   at the bar line) is the real design, see docs/ui-design.md. */
+const SECTIONS = [
+  {id:"a", label:"Bars 1–11",  bar:0,             pct:1},
+  {id:"b", label:"Bars 12–22", bar:Math.floor(bars.length/2), pct:1},
+];
+let currentSectionId = SECTIONS[0].id;
+const sectionAt = pos => {
+  let s = SECTIONS[0];
+  for (const sec of SECTIONS) if (bars[sec.bar] <= pos) s = sec; else break;
+  return s;
+};
+const section = id => SECTIONS.find(s => s.id === id);
+
 /* ---------- build the mixer ---------- */
 function buildMixer(){
   $("#mixer").innerHTML = PARTS.map(p => `
@@ -153,6 +184,51 @@ function buildMixer(){
   $("#beats").innerHTML = Array.from({length:beatsPerBar},
     (_,i)=>`<div class="beat${i===0?" one":""}" data-beat="${i}"></div>`).join("");
   $("#barTot").textContent = bars.length;
+
+  $("#sections").innerHTML = SECTIONS.map(s => `
+    <button class="chip" data-section="${s.id}" aria-pressed="${s.id===currentSectionId}">
+      ${s.label}<span class="pct" id="pct-${s.id}">${Math.round(s.pct*100)}%</span>
+    </button>`).join("");
+}
+
+/* ---------- section-scoped tempo ---------- */
+function applyRateChange(newRate){
+  // Web Audio playbackRate is constant per source, so a rate change mid-play
+  // has to resync position() the same way scrubbing does, or every position
+  // read after this point is wrong.
+  if (ctx && playing){
+    startPos = position();
+    startCtxTime = ctx.currentTime;
+    Object.values(sources).forEach(s => s.playbackRate.value = newRate);
+  }
+  rate = newRate;
+}
+function setRate(newRate, sec){        // user drags the Tempo slider: store + apply
+  sec.pct = newRate;
+  applyRateChange(newRate);
+  renderTempo();
+}
+function renderTempo(){
+  const sec = section(currentSectionId);
+  const t = $("#tempo");
+  if (document.activeElement !== t) t.value = Math.round(sec.pct*100);
+  // The transport is tight (it already hides pan behind a toggle for the same
+  // reason), so it gets just the number; the section name lives in the Tempo
+  // block header above, which has the room.
+  $("#tempoVal").textContent = Math.round(sec.pct*100) + "%";
+  $("#tempoLive").textContent = Math.round(sec.pct*100) + "% · " + sec.label;
+  document.querySelectorAll("[data-section]").forEach(b => {
+    b.setAttribute("aria-pressed", b.dataset.section === currentSectionId);
+    const p = document.getElementById("pct-"+b.dataset.section);
+    if (p) p.textContent = Math.round(section(b.dataset.section).pct*100) + "%";
+  });
+}
+function jumpToSection(id){
+  currentSectionId = id;
+  rate = section(id).pct;
+  const at = bars[section(id).bar];
+  if (playing) startSources(at); else { startPos = at; render(); }
+  renderTempo();
 }
 
 const panLabel = v => Math.abs(v) < 0.03 ? "C"
@@ -215,6 +291,7 @@ function stopSources(){
 }
 
 function startSources(at){
+  clearCountIn();          // any pending count-in tick/entry belongs to a start we're superseding
   stopSources();
   PARTS.forEach(p => {
     const src = ctx.createBufferSource();
@@ -226,6 +303,12 @@ function startSources(at){
   });
   startCtxTime = ctx.currentTime;
   startPos = at;
+  // startSources is the one place playback actually begins from a known
+  // position, whether that's the count-in finishing, a section jump, a scrub,
+  // or a loop repeat — so it's also the one place responsible for making sure
+  // the render loop is (still) running, rather than assuming a caller already
+  // started it.
+  if (playing && !loopRunning) loopFrame();
 }
 
 /* ---------- metronome ---------- */
@@ -239,6 +322,9 @@ function tick(strong){
   o.start(); o.stop(ctx.currentTime + 0.07);
 }
 
+let countInTimers = [];    // pending click-tick / delayed-start setTimeout ids
+function clearCountIn(){ countInTimers.forEach(clearTimeout); countInTimers = []; }
+
 async function play(){
   await ensureAudio();
   if (ctx.state === "suspended") await ctx.resume();
@@ -246,16 +332,18 @@ async function play(){
   const at = (loopOn && (from < bars[loopA] || from >= bars[loopB])) ? bars[loopA] : from;
   if (clickOn){
     const spb = barLen(0) / beatsPerBar;
-    for (let i=0;i<beatsPerBar;i++) setTimeout(()=>tick(i===0), i*spb*1000/rate);
-    setTimeout(()=>reallyStart(at), beatsPerBar*spb*1000/rate);
+    for (let i=0;i<beatsPerBar;i++)
+      countInTimers.push(setTimeout(()=>tick(i===0), i*spb*1000/rate));
+    countInTimers.push(setTimeout(()=>reallyStart(at), beatsPerBar*spb*1000/rate));
   } else reallyStart(at);
   playing = true; setPlayIcon(true);
 }
-function reallyStart(at){ if (playing){ startSources(at); loopFrame(); } }
+function reallyStart(at){ if (playing) startSources(at); }
 
 function pause(){
   const p = position();
-  stopSources(); playing = false; startPos = Math.min(p, DUR);
+  clearCountIn(); stopSources(); playing = false; loopRunning = false;
+  startPos = Math.min(p, DUR);
   cancelAnimationFrame(raf); setPlayIcon(false); render();
 }
 
@@ -265,8 +353,9 @@ function setPlayIcon(on){
   $("#play").setAttribute("aria-label", on ? "Pause" : "Play");
 }
 
-let lastBeat = -1;
+let lastBeat = -1, loopRunning = false;
 function loopFrame(){
+  loopRunning = true;
   const pos = position();
   if (loopOn && pos >= bars[loopB]) { startSources(bars[loopA]); lastBeat = -1; }
   else if (pos >= DUR) { pause(); startPos = 0; render(); return; }
@@ -297,6 +386,13 @@ function render(){
   const sc = $("#scrub");
   if (document.activeElement !== sc) sc.value = Math.round(pos/DUR*1000);
   renderLyrics(pos);
+
+  const here = sectionAt(pos).id;
+  if (here !== currentSectionId){       // crossed a boundary: hand off, don't overwrite
+    currentSectionId = here;
+    applyRateChange(section(here).pct);
+    renderTempo();
+  }
 }
 const fmt = s => Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
 
@@ -367,10 +463,7 @@ function wire(){
       if (playing) startSources(at); else { startPos = at; render(); }
     }
     if (t.id === "tempo"){
-      rate = t.value/100;
-      $("#tempoVal").textContent = t.value + "%";
-      Object.values(sources).forEach(s => s.playbackRate.value = rate);
-      if (playing){ startPos = position(); startCtxTime = ctx.currentTime; }
+      setRate(t.value/100, section(currentSectionId));
     }
   });
 
@@ -380,6 +473,7 @@ function wire(){
     if (t.dataset.mute){ const s = state[t.dataset.mute]; s.mute = !s.mute; clearPreset(); refresh(); }
     if (t.dataset.my){ myPart = t.dataset.my; markMine(); if (activePreset) applyPreset(activePreset); }
     if (t.dataset.preset) applyPreset(t.dataset.preset);
+    if (t.dataset.section) jumpToSection(t.dataset.section);
     if (t.id === "play") playing ? pause() : play();
     if (t.id === "loopBtn"){
       loopOn = !loopOn;
@@ -406,6 +500,7 @@ buildMixer();
 wire();
 applyPreset("full");
 markMine();
+renderTempo();
 $("#tTot").textContent = fmt(DUR);
 render();
 </script>
