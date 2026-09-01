@@ -185,3 +185,77 @@ Matching that text is a losing game. What is stable is that **the solo staff
 carries no printed label at all**, so Audiveris leaves its default "Voice",
 while every ensemble staff is labelled and yields *something*. Routing on label
 *presence* plus clef, rather than label content, survives both scans.
+
+---
+
+# Update: triplet timing
+
+Reported symptom: the triplets sound wrong. They do, and the cause is worse
+than a few wrong notes — it is cumulative drift.
+
+## What Audiveris did with the triplets
+
+Bar 6 of the printed book is two quarter-note triplet groups:
+
+| | Printed | Parsed |
+|---|---|---|
+| Notes | `ve ry un` + `la dy like` — 6 notes, 2 triplets | `ve:1 ry:1 un:1 la:2` — 4 notes |
+| Bar length | 4 beats | **5 beats** |
+
+The triplet brackets weren't seen, so the notes came through at full length and
+the bar ran a beat long. Detection is inconsistent rather than absent: bar 14
+was parsed correctly, bar 13 caught 2 of 3 triplet notes and so came up *short*,
+bar 6 missed the brackets entirely and ran long.
+
+## Why that is audible out of all proportion
+
+Only 23 bars in 3616 (0.6%) have durations that disagree with their time
+signature. But a wrong-length bar displaces **every note after it in that part**,
+and the errors accumulate:
+
+| Part | Drift by the end of the number |
+|---|---|
+| 20 (the Sky melody) | **−14.17 beats — 3.5 bars early** |
+| 13 | −3.00 beats |
+| 8, 9, 15, 18 | ±1.00 beat each |
+
+Each part drifts by a different amount, so the lines slide out of sync with one
+another as the song goes on. That is the "off" you were hearing, and it is a
+much bigger effect than the individual mis-read notes.
+
+## The repair
+
+`spike/fix_timing.py`, wired into `merge_parts.py --fix-timing`. Three passes,
+each only applied when the arithmetic works out:
+
+1. **Restore a missed tuplet.** Find a run of equal-duration notes that, scaled
+   by 2/3 (or 4/5, 4/7…), makes the bar come out exactly right. Bar 6's three
+   quarters become a triplet and the bar lands on 4.
+2. **Pad a short bar with a rest.** Doesn't recover the dropped note, but stops
+   the bar dragging everything after it. Also handles the partial-triplet case:
+   scale the run, then pad the one missing notehead.
+3. **`--truncate`, last resort.** For bars no repair fits, shorten the final
+   notes until the bar fits. It loses note length, which is much less audible
+   than losing alignment.
+
+Result on the whole score: 2 tuplets restored, 17 bars padded, 4 truncated,
+**every part now ends exactly on its barline** — total drift 21.17 beats → 0.
+The MIDI carries 11 triplet-length notes where it previously had 5.
+
+## A trap worth recording
+
+Writing the repaired score back out as MusicXML and re-reading it **undid most
+of the fix** — part 20's residual went from +4.5 beats to +12.5. music21 picks
+a `divisions` value that can't represent 2/3-quarter tuplets exactly, so the
+round-trip requantises them. The repair is therefore applied in memory and
+handed straight to the MIDI writer, which chooses `ticksPerQuarter=10080` — 
+divisible by 3, so triplets come out exact.
+
+## Still wrong
+
+The four truncated bars are genuinely mis-read and truncation only makes them
+*fit*, it doesn't make them right: part 8 bar 170, and part 20 bars 71, 85, 87
+(the last two are a whole note where the bar has room for a half). Only bar 13
+of those was a triplet problem; the rest are ordinary duration errors. And bar 6
+now has the right length but still only 4 of its 6 notes — the second triplet
+group is a half note.

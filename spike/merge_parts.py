@@ -19,8 +19,15 @@ Routing uses three signals, in order of reliability:
 
 This is the automated half of the review step. A human still confirms it.
 
+Pass --fix-timing to repair bars whose durations don't match the time signature
+before merging (see spike/fix_timing.py). Do that here rather than by writing a
+corrected MusicXML in between: music21 picks a `divisions` value that cannot
+represent 2/3-quarter tuplets exactly, so a round-trip through MusicXML
+reintroduces most of the drift the repair just removed.
+
 Usage:
     python spike/merge_parts.py out.mid score.mxl [score2.mxl ...] [--split]
+                                [--fix-timing]
 """
 
 from __future__ import annotations
@@ -63,6 +70,11 @@ def main() -> int:
     ap.add_argument("out", help="output .mid path (a stem, if --split)")
     ap.add_argument("scores", nargs="+", help="MusicXML files, in playing order")
     ap.add_argument("--split", action="store_true", help="also write one file per group")
+    ap.add_argument("--fix-timing", action="store_true",
+                    help="repair bars that don't sum to their time signature first")
+    ap.add_argument("--truncate", action="store_true",
+                    help="with --fix-timing, also shorten notes in bars no repair "
+                         "fits, so playback stays in time")
     args = ap.parse_args()
 
     from music21 import converter
@@ -76,6 +88,12 @@ def main() -> int:
     cursor = 0.0
     for path in args.scores:
         sc = converter.parse(path)
+        if args.fix_timing:
+            from fix_timing import repair
+            st = repair(sc, truncate=args.truncate)
+            print(f"  {Path(path).name}: timing — {st['tuplet_fixed']} tuplets restored, "
+                  f"{st['padded']} padded, {st['truncated']} truncated, "
+                  f"{st['unfixable']} left for a human")
         span = float(sc.highestTime)
         for part in sc.parts:
             g = route(part)
