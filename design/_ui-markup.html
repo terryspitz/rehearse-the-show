@@ -124,7 +124,7 @@ const state = {};                     // id -> {vol, pan, mute, solo}
 PARTS.forEach(p => state[p.id] = {vol:0.85, pan:p.pan, mute:false, solo:false});
 
 const bars = DATA.measures.map(m => m.seconds);
-const DUR = DATA.duration;
+let DUR = DATA.duration;   // extended once real audio is decoded — see ensureAudio()
 const beatsPerBar = DATA.measures[0].beats || 4;
 const $ = s => document.querySelector(s);
 
@@ -247,6 +247,13 @@ async function ensureAudio(){
     gain.connect(pan); pan.connect(ctx.destination);
     nodes[p.id] = {gain, pan};
   }));
+  // The rendered stems carry natural instrument decay past the score's last
+  // written beat (a sustained "choir" patch on a final whole note can ring on
+  // for several seconds) — DATA.duration is the *musical* length, not the
+  // *audible* one, so extend playback to the longest buffer rather than
+  // truncating that tail.
+  DUR = Math.max(DATA.duration, ...Object.values(buffers).map(b => b.duration));
+  $("#tTot").textContent = fmt(DUR);
   applyMix();
 }
 
@@ -333,7 +340,7 @@ async function play(){
   if (clickOn){
     const spb = barLen(0) / beatsPerBar;
     for (let i=0;i<beatsPerBar;i++)
-      countInTimers.push(setTimeout(()=>tick(i===0), i*spb*1000/rate));
+      countInTimers.push(setTimeout(() => { tick(i===0); showBeat(i); }, i*spb*1000/rate));
     countInTimers.push(setTimeout(()=>reallyStart(at), beatsPerBar*spb*1000/rate));
   } else reallyStart(at);
   playing = true; setPlayIcon(true);
@@ -380,8 +387,7 @@ function render(){
   $("#barNum").textContent = bi + 1;
   const within = (pos - bars[bi]) / (barLen(bi)/beatsPerBar);
   const beat = Math.max(0, Math.min(beatsPerBar-1, Math.floor(within)));
-  document.querySelectorAll(".beat").forEach((el,i)=>
-    el.classList.toggle("on", playing && i === beat));
+  showBeat(playing ? beat : -1);
   $("#tCur").textContent = fmt(pos);
   const sc = $("#scrub");
   if (document.activeElement !== sc) sc.value = Math.round(pos/DUR*1000);
@@ -395,6 +401,9 @@ function render(){
   }
 }
 const fmt = s => Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+function showBeat(i){          // i=-1 means "none lit"; shared by playback and count-in
+  document.querySelectorAll(".beat").forEach((el,idx) => el.classList.toggle("on", idx===i));
+}
 
 const LY = DATA.lyrics;
 function renderLyrics(pos){

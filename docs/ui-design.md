@@ -109,6 +109,30 @@ sequence of taps; a human testing by hand would likely not have hit either —
 which is itself the case for testing the interaction programmatically rather
 than trusting a manual click-through.
 
+**A second report — "the Bach sounds like the bars are one beat off" — led
+to a proper measurement rather than a guess.** Tempo/onset alignment was
+checked three ways: a dual-pitch energy crossfade at the bar 1 transition
+(measured 1.045s against a predicted 1.0s — normal attack-envelope variance,
+not an error), a full-song autocorrelation pitch tracker matched against
+every predicted note onset from bar 1 to bar 17 (mean offset **−0.002s**,
+std **78ms**, no drift trend), and a direct MIDI tempo-event read (120 BPM,
+exactly as assumed). The pipeline's tempo math is correct.
+
+What *was* wrong, found while checking: the beat-dot indicator was dark
+throughout the four-click count-in — `render()` only starts once the count-in
+finishes, so a listener watching the dots while hearing the clicks got no
+visual pulse at all for two seconds, then the display "woke up" exactly on
+bar 1. Fixed by having the same `setTimeout` that fires each click also light
+its beat-dot, so the visual and audible pulse are locked together from the
+very first click rather than only from when the song itself starts.
+
+A second, unrelated defect turned up in the same pass: the rendered stems
+carry natural instrument decay past the score's last written beat — a
+sustained choir patch on a final whole note rings for several seconds — but
+the player's declared duration was the *musical* length (44.0s), cutting that
+tail off mid-decay. Fixed by extending playback to the longest actually-decoded
+buffer once real audio loads, rather than trusting the score's nominal length.
+
 
 ## Palette and type
 
