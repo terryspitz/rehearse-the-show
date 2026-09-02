@@ -18,6 +18,21 @@
       is live. Your <i>Guys and Dolls</i> layout is the same shape: Sky, Tenor, Bass, Piano.</span>
     </div>
     <section class="block">
+      <div class="h2row">
+        <h2>Your show (Google Drive)</h2>
+        <button class="mini" id="driveLoadBtn">Load</button>
+      </div>
+      <div class="drivebody" id="driveBody">
+        <p class="drivehint">Pulls the section list, bar counts and part files from your
+        own <i>Guys and Dolls</i> parse in Drive (<code>guys and dolls/lbal</code>). This is
+        reference info only — it doesn't retarget the mix above, which keeps playing the
+        Bach demo; playing your real parts needs an in-browser MIDI synth, a separate piece
+        of work. Only loads when this page is open inside a Claude conversation, not as a
+        standalone link.</p>
+      </div>
+    </section>
+
+    <section class="block">
       <h2>I'm singing</h2>
       <div class="parts-pick" id="myPart"></div>
     </section>
@@ -461,6 +476,97 @@ function markMine(){
     b.setAttribute("aria-pressed", b.dataset.my === myPart));
 }
 
+/* ---------- load structural data from Drive ---------- */
+// This show's "Guys and Dolls / lbal" Drive folder — see licensed/drive-upload/.
+// Read-only reference panel: never wired into the audio engine above (that would
+// need an in-browser MIDI synth, which doesn't exist yet).
+const DRIVE_FOLDER_ID = "1GXON0YJumc079WF5TWvb34GxN6iAXlsW";
+let mcp = null, mcpChecked = false;
+
+async function driveCall(tool, input, isRetry){
+  try {
+    return await mcp.callTool("Google Drive", tool, input);
+  } catch (err) {
+    // Only auto-retry the one code the contract stamps retryable, and only once.
+    if (!isRetry && err && err.retryable){
+      await new Promise(r => setTimeout(r, 600 + Math.random()*400));
+      return driveCall(tool, input, true);
+    }
+    throw err;
+  }
+}
+
+function driveErrText(err){
+  const code = err && err.code, server = (err && err.server) || "Google Drive";
+  if (code === "needs_reauth") return `Reconnect ${server} in claude.ai Settings → Connectors, then try again.`;
+  if (code === "server_not_connected") return `Add ${server} in claude.ai Settings → Connectors, then try again.`;
+  if (code === "selection_required") return `Choose a ${server} account when claude.ai prompts you, then try again.`;
+  if (code === "tool_error") return err.message || "Drive reported an error.";
+  if (code === "server_unavailable") return "Drive is temporarily unavailable — try again in a moment.";
+  return (err && err.message) || "Couldn't reach Drive.";
+}
+
+async function driveLoad(){
+  const btn = $("#driveLoadBtn"), body = $("#driveBody");
+  btn.disabled = true; btn.textContent = "Loading…";
+  body.innerHTML = `<p class="drivehint">Connecting to Drive…</p>`;
+  try {
+    if (!mcpChecked){
+      mcp = (window.claude && window.claude.use) ? await window.claude.use("mcp") : null;
+      mcpChecked = true;
+    }
+    if (!mcp){
+      body.innerHTML = `<p class="drivehint">Can't reach Drive from here — that only works
+        when this page is open inside a Claude conversation, not as a standalone link.</p>`;
+      return;
+    }
+    const list = await driveCall("search_files", { query: `parentId = '${DRIVE_FOLDER_ID}'` });
+    const files = (list.payload && list.payload.files) || [];
+    const cfgFile = files.find(f => f.title === "lbal-config.json");
+    if (!cfgFile){
+      body.innerHTML = `<p class="drivehint error">No lbal-config.json in that Drive folder yet.</p>`;
+      return;
+    }
+    const dl = await driveCall("download_file_content", { fileId: cfgFile.id });
+    const bytes = Uint8Array.from(atob(dl.payload.content), c => c.charCodeAt(0));
+    const cfg = JSON.parse(new TextDecoder().decode(bytes));
+    renderDriveInfo(cfg, files);
+  } catch (err) {
+    body.innerHTML = `<p class="drivehint error">${driveErrText(err)}</p>`;
+  } finally {
+    btn.disabled = false; btn.textContent = "Reload";
+  }
+}
+
+function renderDriveInfo(cfg, files){
+  const fileLink = name => {
+    const f = files.find(x => x.title === name);
+    return f ? `<a href="${f.viewUrl}" target="_blank" rel="noopener">${name}</a>` : name;
+  };
+  const row = (main, sub) => `<div class="driverow"><div class="driverowmain">${main}</div><div class="driverowsub">${sub}</div></div>`;
+
+  const sections = (cfg.sections || []).map(s =>
+    row(s.label, [s.character, s.tempoBpm ? s.tempoBpm + " bpm" : "tempo not set"].filter(Boolean).join(" · "))
+  ).join("");
+
+  const vocalParts = ((cfg.parts && cfg.parts.groups) || []).map(p =>
+    row(p.label, [p.noteCount ? p.noteCount + " notes" : "", fileLink(p.midiFile)].filter(Boolean).join(" · "))
+  ).join("");
+
+  const pianoParts = ((cfg.piano && cfg.piano.files) || []).map(p =>
+    row(p.label, ["bars " + p.bars, fileLink(p.midiFile)].filter(Boolean).join(" · "))
+  ).join("");
+
+  const barCount = cfg.bars ? cfg.bars.pianoBarCount : "?";
+  $("#driveBody").innerHTML = `
+    <p class="drivehint"><b>${cfg.title}</b> — ${cfg.show}, ${cfg.composer} · ${barCount} bars.
+    Reference only — the mix above still plays the Bach demo.</p>
+    <div class="drivegroup"><div class="drivelabel">Sections</div>${sections}</div>
+    <div class="drivegroup"><div class="drivelabel">Vocal parts</div>${vocalParts}</div>
+    <div class="drivegroup"><div class="drivelabel">Piano</div>${pianoParts}</div>
+  `;
+}
+
 /* ---------- wiring ---------- */
 function wire(){
   document.addEventListener("input", e => {
@@ -492,6 +598,7 @@ function wire(){
       if (loopOn && playing) startSources(bars[loopA]);
     }
     if (t.id === "clickBtn"){ clickOn = !clickOn; t.setAttribute("aria-pressed", clickOn); }
+    if (t.id === "driveLoadBtn") driveLoad();
     if (t.id === "panBtn"){
       const on = t.getAttribute("aria-pressed") !== "true";
       t.setAttribute("aria-pressed", on);
