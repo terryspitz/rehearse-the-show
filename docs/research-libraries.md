@@ -165,6 +165,15 @@ thing that kills the product, buying it is a legitimate answer.
 
 ### Verdict on stage 2
 
+> **Update — this has now been tested**, on a real *Guys and Dolls* vocal book.
+> See [omr-evaluation.md](omr-evaluation.md). Short version: **Audiveris is
+> confirmed as the right default**, on evidence. Over 10 pages it and homr tie
+> on notes (619 vs 620), but Audiveris extracts **283 lyric syllables to homr's
+> zero** and reads the staff labels. Both over- or under-segment the parts;
+> Audiveris errs by splitting, which a review UI can merge, while homr errs by
+> flattening simultaneous staves into sequence, which is unrecoverable. oemer is
+> out. The review step is load-bearing, not polish.
+
 Default to **Audiveris in batch mode** for uploaded PDFs (best part structure,
 handles multipage, exports lyrics), with **homr** available as a per-page second
 opinion for photos and for pages Audiveris chokes on. Treat OMR output as a
@@ -211,7 +220,12 @@ Other libraries considered:
 - **Verovio's `renderToMIDI()`** — can do MusicXML→MIDI entirely client-side.
   Attractive for a no-backend prototype; less control over per-part splitting.
 
-### The SATB problem — the one real gotcha
+### The SATB problem — a real gotcha, though not the worst one
+
+> **Update:** testing found a bigger structural problem than divisi — systems
+> whose staff count changes mid-page. See
+> [omr-evaluation.md §3](omr-evaluation.md). Divisi is below; read both.
+
 
 **In a musical theatre vocal score, SATB parts are usually not separate parts.**
 The chorus is typically notated on one or two staves with divisi — two voices per
