@@ -7,6 +7,15 @@
     </div>
   </div>
 
+  <div class="loadscreen" id="adminGate" hidden>
+    <div class="loadbox">
+      <div class="loadtitle">Admin sign-in</div>
+      <div class="loadmsg">Sign in with the Google account that owns the Drive folder to correct sections, tempo, alignment and lyric lines.</div>
+      <button class="mini" id="adminSignInBtn">Sign in with Google</button>
+      <div class="loadmsg" id="adminAuthMsg"></div>
+    </div>
+  </div>
+
   <header class="top" id="topBar" hidden>
     <div class="eyebrow">Rehearsal mix · Bar-by-bar</div>
     <div class="songrow">
@@ -21,6 +30,31 @@
 
   <main class="body" id="mainBody" hidden>
     <div class="notice" id="notesBlock"></div>
+
+    <section class="block admin" id="adminPanel" hidden>
+      <div class="h2row">
+        <h2>Admin</h2>
+        <div class="tempolive" id="adminSaveStatus"></div>
+      </div>
+
+      <div class="adminsub">
+        <h3>Sections</h3>
+        <div id="adminSections"></div>
+      </div>
+
+      <div class="adminsub">
+        <h3>Lyric lines <span class="adminhint">tap a word to split a line there</span></h3>
+        <div id="adminLines"></div>
+      </div>
+
+      <div class="adminsub">
+        <h3>Vocal ↔ piano alignment <span class="adminhint">vocal-quarter → shared-quarter</span></h3>
+        <div id="adminKnots"></div>
+        <button class="mini" id="adminAddKnot">+ Add point</button>
+      </div>
+
+      <button class="play adminsave" id="adminSaveBtn">Save to Drive</button>
+    </section>
 
     <section class="block">
       <h2>I'm singing</h2>
@@ -97,8 +131,19 @@ const API_KEY = "PASTE_YOUR_GOOGLE_DRIVE_API_KEY_HERE";
 const DRIVE_FOLDER_ID = "1GXON0YJumc079WF5TWvb34GxN6iAXlsW"; // "Guys and Dolls / lbal"
 const SOUNDFONT_NAME = "lbal.sf2";
 
+// Only needed for admin mode (?admin=1) -- a separate one-time setup step
+// from API_KEY: an OAuth 2.0 Client ID (Google Cloud Console -> APIs &
+// Services -> Credentials -> Create Credentials -> OAuth client ID ->
+// "Web application", with this page's URL under Authorized JavaScript
+// origins). Cast members never trigger this path -- API_KEY-only reads
+// stay exactly as they are.
+const ADMIN_CLIENT_ID = "PASTE_YOUR_GOOGLE_OAUTH_CLIENT_ID_HERE";
+const DRIVE_WRITE_SCOPE = "https://www.googleapis.com/auth/drive";
+
 const $ = s => document.querySelector(s);
 const DRIVE_FILES = "https://www.googleapis.com/drive/v3/files";
+const DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3/files";
+let scoreFileId = null;
 
 async function driveFetchJson(url){
   const res = await fetch(url);
@@ -148,6 +193,7 @@ async function loadEverything(){
 
     const scoreFile = byName("lbal-score.json");
     if (!scoreFile) throw Object.assign(new Error("lbal-score.json not found in the Drive folder"), {status: "missing_score"});
+    scoreFileId = scoreFile.id;
     const SCORE = await driveFetchJson(`${DRIVE_FILES}/${scoreFile.id}?alt=media&key=${API_KEY}`);
 
     msg.textContent = "Loading the instrument sound…";
@@ -164,11 +210,158 @@ async function loadEverything(){
     $("#mainBody").hidden = false;
     $("#transport").hidden = false;
     initApp(SCORE, ctx, synth);
+
+    if (isAdminRequested()) await gateAdmin(SCORE);
   } catch (err) {
     title.textContent = "Couldn't load from Drive";
     msg.textContent = driveErrText(err);
     retry.hidden = false;
   }
+}
+
+/* ================= admin mode (hidden behind ?admin=1) ================= */
+function isAdminRequested(){
+  return new URLSearchParams(location.search).get("admin") === "1";
+}
+
+let adminToken = null;
+
+function gateAdmin(SCORE){
+  return new Promise(resolve => {
+    const gate = $("#adminGate"), authMsg = $("#adminAuthMsg"), btn = $("#adminSignInBtn");
+    gate.hidden = false;
+
+    if (!ADMIN_CLIENT_ID || ADMIN_CLIENT_ID === "PASTE_YOUR_GOOGLE_OAUTH_CLIENT_ID_HERE"){
+      authMsg.textContent = "Admin mode needs a Google OAuth Client ID set up first — see the setup README.";
+      btn.hidden = true;
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.onload = () => {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: ADMIN_CLIENT_ID,
+        scope: DRIVE_WRITE_SCOPE,
+        callback: (resp) => {
+          if (resp.error){ authMsg.textContent = "Sign-in failed: " + resp.error; return; }
+          adminToken = resp.access_token;
+          gate.hidden = true;
+          initAdminPanel(SCORE);
+          resolve();
+        },
+      });
+      btn.addEventListener("click", () => client.requestAccessToken());
+    };
+    script.onerror = () => { authMsg.textContent = "Couldn't load Google Sign-In — check your network."; resolve(); };
+    document.head.appendChild(script);
+  });
+}
+
+async function saveScore(score){
+  const status = $("#adminSaveStatus");
+  status.textContent = "Saving…";
+  try {
+    const res = await fetch(`${DRIVE_UPLOAD}/${scoreFileId}?uploadType=media`, {
+      method: "PATCH",
+      headers: { "Authorization": `Bearer ${adminToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify(score),
+    });
+    if (!res.ok) throw new Error(`Drive write failed (${res.status})`);
+    status.textContent = "Saved — reloading…";
+    setTimeout(() => location.reload(), 900);
+  } catch (err) {
+    status.textContent = "Couldn't save: " + err.message;
+  }
+}
+
+function initAdminPanel(SCORE){
+  const working = JSON.parse(JSON.stringify(SCORE)); // local working copy; only "Save to Drive" persists it
+  $("#adminPanel").hidden = false;
+
+  function renderSections(){
+    $("#adminSections").innerHTML = working.sections.map((s, i) => `
+      <div class="adminrow">
+        <span class="adminrowlabel">${s.label}</span>
+        <select data-sec-line="${i}">
+          ${working.lines.map(l => `<option value="${l.id}" ${l.id===s.lineAnchor?"selected":""}>${(l.text||"(empty)").slice(0,40)}</option>`).join("")}
+        </select>
+        <input type="number" data-sec-bpm="${i}" value="${s.bpm}" min="20" max="300" style="width:60px">
+        <span class="adminhint">BPM${s.bpmIsOverride ? " (overridden)" : ""}</span>
+      </div>`).join("");
+  }
+
+  function renderLines(){
+    $("#adminLines").innerHTML = working.lines.map((l, i) => {
+      const words = (l.text || "").split(" ");
+      const wordSpans = words.map((w, wi) =>
+        `<span class="adminword" data-split-line="${i}" data-split-word="${wi}">${w}</span>`).join(" ");
+      return `<div class="adminrow adminline">
+        <label class="adminconfirm"><input type="checkbox" data-line-confirmed="${i}" ${l.confirmed?"checked":""}> confirmed</label>
+        <div class="adminlinetext">${wordSpans}</div>
+        ${i < working.lines.length - 1 ? `<button class="mini" data-merge-line="${i}">Merge ↓</button>` : ""}
+      </div>`;
+    }).join("");
+  }
+
+  function renderKnots(){
+    $("#adminKnots").innerHTML = working.vocalAlignment.knots.map((k, i) => `
+      <div class="adminrow">
+        <input type="number" data-knot-v="${i}" value="${k[0]}" step="0.5" style="width:80px"> →
+        <input type="number" data-knot-s="${i}" value="${k[1]}" step="0.5" style="width:80px">
+        <button class="mini" data-remove-knot="${i}">Remove</button>
+      </div>`).join("");
+  }
+
+  function renderAll(){ renderSections(); renderLines(); renderKnots(); }
+  renderAll();
+
+  $("#adminPanel").addEventListener("input", e => {
+    const t = e.target;
+    if (t.dataset.secLine !== undefined) working.sections[+t.dataset.secLine].lineAnchor = +t.value;
+    if (t.dataset.secBpm !== undefined){
+      working.sections[+t.dataset.secBpm].bpm = +t.value;
+      working.sections[+t.dataset.secBpm].bpmIsOverride = true;
+    }
+    if (t.dataset.lineConfirmed !== undefined) working.lines[+t.dataset.lineConfirmed].confirmed = t.checked;
+    if (t.dataset.knotV !== undefined) working.vocalAlignment.knots[+t.dataset.knotV][0] = +t.value;
+    if (t.dataset.knotS !== undefined) working.vocalAlignment.knots[+t.dataset.knotS][1] = +t.value;
+  });
+
+  $("#adminPanel").addEventListener("click", e => {
+    const t = e.target;
+    if (t.dataset.splitLine !== undefined){
+      const li = +t.dataset.splitLine, wi = +t.dataset.splitWord;
+      const line = working.lines[li];
+      const words = (line.text || "").split(" ");
+      if (wi === 0) return; // splitting before the first word does nothing
+      const lyricSplit = line.lyricStart + wi; // approx: assumes ~1 word per lyric syllable boundary
+      const first = {...line, text: words.slice(0, wi).join(" "), lyricEnd: Math.min(lyricSplit - 1, line.lyricEnd)};
+      const second = {...line, id: working.lines.length, text: words.slice(wi).join(" "),
+                       lyricStart: Math.min(lyricSplit, line.lyricEnd), quarter: line.quarter, confirmed: false};
+      working.lines.splice(li, 1, first, second);
+      working.lines.forEach((l, idx) => l.id = idx);
+      renderAll();
+    }
+    if (t.dataset.mergeLine !== undefined){
+      const li = +t.dataset.mergeLine;
+      const a = working.lines[li], b = working.lines[li + 1];
+      const merged = {...a, text: (a.text + " " + b.text).trim(), lyricEnd: b.lyricEnd, confirmed: false};
+      working.lines.splice(li, 2, merged);
+      working.lines.forEach((l, idx) => l.id = idx);
+      renderAll();
+    }
+    if (t.dataset.removeKnot !== undefined){
+      working.vocalAlignment.knots.splice(+t.dataset.removeKnot, 1);
+      renderKnots();
+    }
+    if (t.id === "adminAddKnot"){
+      working.vocalAlignment.knots.push([0, 0]);
+      renderKnots();
+    }
+    if (t.id === "adminSaveBtn") saveScore(working);
+  });
 }
 
 /* ================= tempo map: quarters <-> seconds ================= */
