@@ -1,0 +1,624 @@
+<div class="shell">
+  <div class="loadscreen" id="loadScreen">
+    <div class="loadbox">
+      <div class="loadtitle" id="loadTitle">Loading your show…</div>
+      <div class="loadmsg" id="loadMsg">Fetching the song data from Google Drive.</div>
+      <button class="mini" id="retryBtn" hidden>Retry</button>
+    </div>
+  </div>
+
+  <header class="top" id="topBar" hidden>
+    <div class="eyebrow">Rehearsal mix · Bar-by-bar</div>
+    <div class="songrow">
+      <div class="song" id="songTitle">—</div>
+      <div class="keysig" id="showName">—</div>
+    </div>
+    <div class="counter">
+      <div class="bigbar"><span id="barNum">1</span><small>/<span id="barTot">1</span></small></div>
+      <div class="beats" id="beats"></div>
+    </div>
+  </header>
+
+  <main class="body" id="mainBody" hidden>
+    <div class="notice" id="notesBlock"></div>
+
+    <section class="block">
+      <h2>I'm singing</h2>
+      <div class="parts-pick" id="myPart"></div>
+    </section>
+
+    <section class="block">
+      <h2>Balance</h2>
+      <div class="chips" id="presets"></div>
+    </section>
+
+    <section class="block">
+      <div class="h2row">
+        <h2>Tempo</h2>
+        <div class="tempolive" id="tempoLive">— BPM</div>
+      </div>
+      <div class="chips" id="sections"></div>
+    </section>
+
+    <section class="block">
+      <div class="h2row">
+        <h2>Mixer</h2>
+        <button class="mini" id="panBtn" aria-pressed="false">Stereo</button>
+      </div>
+      <div class="mixer" id="mixer"></div>
+    </section>
+
+    <section class="block">
+      <div class="h2row">
+        <h2>Words</h2>
+        <div class="tempolive" id="lineCount"></div>
+      </div>
+      <div class="lyr" id="lyricsNow">
+        <div class="who" id="lyrWho">Sky (solo)</div>
+        <div class="line now" id="lyrNow">—</div>
+      </div>
+      <div class="linelist" id="lineList"></div>
+    </section>
+  </main>
+
+  <div class="tp" id="transport" hidden>
+    <div class="loopbar">
+      <button class="loopbtn" id="loopBtn" aria-pressed="false">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 01-4 4H3"/></svg>
+        <span id="loopLbl">Loop</span>
+      </button>
+      <input type="range" class="scrub" id="scrub" min="0" max="1000" value="0" aria-label="Position">
+      <button class="loopbtn" id="clickBtn" aria-pressed="true" title="Count-in and click">Click</button>
+    </div>
+    <div class="tpmain">
+      <button class="play" id="play" aria-label="Play">
+        <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="tpmeta">
+        <div class="time"><span id="tCur">0:00</span> / <span id="tTot">0:00</span><span id="loopInfo"></span></div>
+        <div class="tempo">
+          <input type="range" id="tempo" min="40" max="200" value="60" aria-label="Tempo (BPM)">
+          <div class="val" id="tempoVal">60</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+/* No Claude/window.claude dependency. Fetches lbal-score.json (which now
+   embeds every part's note list directly -- no separate MIDI/audio files)
+   from a shared Google Drive folder via the public Drive REST API, then
+   synthesizes audio live in the browser via spessasynth_lib, so tempo is a
+   real, independent parameter instead of a resampling trick. See
+   docs/CAST-APP-SETUP.md for one-time setup. */
+
+const API_KEY = "PASTE_YOUR_GOOGLE_DRIVE_API_KEY_HERE";
+const DRIVE_FOLDER_ID = "1GXON0YJumc079WF5TWvb34GxN6iAXlsW"; // "Guys and Dolls / lbal"
+const SOUNDFONT_NAME = "lbal.sf2";
+
+const $ = s => document.querySelector(s);
+const DRIVE_FILES = "https://www.googleapis.com/drive/v3/files";
+
+async function driveFetchJson(url){
+  const res = await fetch(url);
+  if (!res.ok){ const e = new Error(`Drive request failed (${res.status})`); e.status = res.status; throw e; }
+  return res.json();
+}
+
+function driveErrText(err){
+  const status = err && err.status;
+  if (status === 403) return "Drive returned 403 — either the folder isn't shared as \"Anyone with the link\" yet, or the API key isn't allowed to call the Drive API from this domain.";
+  if (status === 404 || status === "missing_score" || status === "missing_soundfont") return err.message + " — check the folder and file names match what's expected.";
+  if (status === 400) return "Drive rejected the request (400) — the API key is probably missing or malformed.";
+  return (err && err.message) || "Something went wrong talking to Drive.";
+}
+
+// Injected by tests to avoid depending on network/CDN access; production
+// code loads the real library dynamically.
+async function loadSynthEngine(soundfontBytes){
+  if (window.__mockSynthEngine) return window.__mockSynthEngine(soundfontBytes);
+  const { Synthetizer } = await import("https://cdn.jsdelivr.net/npm/spessasynth_lib@4/dist/index.js");
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  await ctx.audioWorklet.addModule(
+    "https://cdn.jsdelivr.net/npm/spessasynth_lib@4/dist/worklet_processor.min.js"
+  );
+  const synth = new Synthetizer(ctx.destination, soundfontBytes, false, undefined, { enableEffects: false });
+  return { ctx, synth };
+}
+
+async function loadEverything(){
+  const screen = $("#loadScreen"), title = $("#loadTitle"), msg = $("#loadMsg"), retry = $("#retryBtn");
+  retry.hidden = true;
+  title.textContent = "Loading your show…";
+  msg.textContent = "Fetching the song data from Google Drive.";
+
+  if (!API_KEY || API_KEY === "PASTE_YOUR_GOOGLE_DRIVE_API_KEY_HERE"){
+    title.textContent = "Setup needed";
+    msg.textContent = "This page needs a Google Drive API key before it can load anything — see the setup README next to this file.";
+    return;
+  }
+
+  try {
+    const list = await driveFetchJson(
+      `${DRIVE_FILES}?q=${encodeURIComponent(`'${DRIVE_FOLDER_ID}' in parents and trashed = false`)}&key=${API_KEY}&fields=files(id,name)`
+    );
+    const files = list.files || [];
+    const byName = name => files.find(f => f.name === name);
+
+    const scoreFile = byName("lbal-score.json");
+    if (!scoreFile) throw Object.assign(new Error("lbal-score.json not found in the Drive folder"), {status: "missing_score"});
+    const SCORE = await driveFetchJson(`${DRIVE_FILES}/${scoreFile.id}?alt=media&key=${API_KEY}`);
+
+    msg.textContent = "Loading the instrument sound…";
+    const sfFile = byName(SOUNDFONT_NAME);
+    if (!sfFile) throw Object.assign(new Error(`${SOUNDFONT_NAME} not found in the Drive folder`), {status: "missing_soundfont"});
+    const sfRes = await fetch(`${DRIVE_FILES}/${sfFile.id}?alt=media&key=${API_KEY}`);
+    if (!sfRes.ok) throw Object.assign(new Error(`Couldn't download ${SOUNDFONT_NAME} (${sfRes.status})`), {status: sfRes.status});
+    const soundfontBytes = await sfRes.arrayBuffer();
+
+    const { ctx, synth } = await loadSynthEngine(soundfontBytes);
+
+    screen.hidden = true;
+    $("#topBar").hidden = false;
+    $("#mainBody").hidden = false;
+    $("#transport").hidden = false;
+    initApp(SCORE, ctx, synth);
+  } catch (err) {
+    title.textContent = "Couldn't load from Drive";
+    msg.textContent = driveErrText(err);
+    retry.hidden = false;
+  }
+}
+
+/* ================= tempo map: quarters <-> seconds ================= */
+function makeTempoMap(sections, totalQuarters){
+  // sections are sorted by their shared-timeline bar/quarter start, each with a live bpm.
+  return {
+    secondsAt(quarter){
+      // walk sections in order, accumulating seconds per segment at that
+      // segment's own bpm, until we reach the segment containing `quarter`
+      let sec = 0;
+      for (let i = 0; i < sections.length; i++){
+        const s = sections[i];
+        const segStart = s.startQuarter;
+        const segEnd = (i + 1 < sections.length) ? sections[i + 1].startQuarter : Infinity;
+        if (quarter <= segStart) break;
+        const qInSeg = Math.min(quarter, segEnd) - segStart;
+        sec += qInSeg * 60 / s.bpm;
+        if (quarter <= segEnd) break;
+      }
+      return sec;
+    },
+    quarterAt(seconds){
+      // invert by walking the same segments
+      let acc = 0;
+      for (let i = 0; i < sections.length; i++){
+        const s = sections[i];
+        const segStart = s.startQuarter;
+        const segEnd = (i + 1 < sections.length) ? sections[i + 1].startQuarter : Infinity;
+        const segQuarters = segEnd - segStart;
+        const segSeconds = segQuarters === Infinity ? Infinity : segQuarters * 60 / s.bpm;
+        if (seconds <= acc + segSeconds || segSeconds === Infinity){
+          return segStart + (seconds - acc) * s.bpm / 60;
+        }
+        acc += segSeconds;
+      }
+      return totalQuarters;
+    },
+  };
+}
+
+function warpFactory(knots){
+  // piecewise-linear, knots = [[vocalQ, sharedQ], ...] sorted by vocalQ
+  return function warp(vocalQuarter){
+    if (vocalQuarter <= knots[0][0]) return knots[0][1];
+    for (let i = 0; i < knots.length - 1; i++){
+      const [v0, s0] = knots[i], [v1, s1] = knots[i + 1];
+      if (vocalQuarter <= v1){
+        const t = (vocalQuarter - v0) / (v1 - v0 || 1);
+        return s0 + t * (s1 - s0);
+      }
+    }
+    const [vN, sN] = knots[knots.length - 1];
+    return sN + (vocalQuarter - vN);
+  };
+}
+
+/* ================= app ================= */
+function initApp(SCORE, ctx, synth){
+  const PARTS = SCORE.parts;
+  const warp = warpFactory(SCORE.vocalAlignment.knots);
+  let nodes = {};
+  let myPart = PARTS.find(p => p.id !== "piano")?.id || PARTS[0].id;
+  let activePreset = "full", loopOn = false, clickOn = true;
+  const state = {};
+  PARTS.forEach(p => state[p.id] = {vol: 0.85, pan: p.pan, mute: false, solo: false});
+
+  // sections carry a "startQuarter" on the SHARED (piano) timeline, derived
+  // from their lineAnchor's lyric quarter (vocal timeline) warped across.
+  const sections = SCORE.sections.map(s => {
+    const line = SCORE.lines.find(l => l.id === s.lineAnchor);
+    const startQuarter = line ? warp(line.quarter) : (SCORE.measures[s.bar] ? SCORE.measures[s.bar].quarter : 0);
+    return {...s, startQuarter};
+  }).sort((a, b) => a.startQuarter - b.startQuarter);
+
+  const totalQuarters = Math.max(
+    SCORE.measures[SCORE.measures.length - 1].quarter,
+    ...PARTS.map(p => {
+      const last = p.notes[p.notes.length - 1];
+      const q = p.id === "piano" ? last.quarter : warp(last.quarter);
+      return q + (last.duration || 0);
+    })
+  );
+
+  let tempoMap = makeTempoMap(sections, totalQuarters);
+  const bars = SCORE.measures.map(m => m.quarter).map(q => tempoMap.secondsAt(q));
+  let DUR = tempoMap.secondsAt(totalQuarters);
+
+  const beatsPerBar = SCORE.measures[0].beats || 4;
+
+  const PRESETS = [
+    {id:"full",  label:"Full mix",      hint:"Everything, evenly balanced"},
+    {id:"loud",  label:"Mine louder",   hint:"Your line on top, others underneath"},
+    {id:"only",  label:"Mine only",     hint:"Your line alone with the piano"},
+    {id:"drop",  label:"Drop mine",     hint:"Everyone but you — sing your own line"},
+    {id:"wide",  label:"Spread out",    hint:"Parts pushed apart across the stereo field"},
+  ];
+
+  let currentSectionId = sections[0].id;
+  const sectionAt = quarter => {
+    let s = sections[0];
+    for (const sec of sections) if (sec.startQuarter <= quarter) s = sec; else break;
+    return s;
+  };
+  const section = id => sections.find(s => s.id === id);
+
+  $("#songTitle").textContent = SCORE.title;
+  $("#showName").textContent = SCORE.show;
+  const noteLines = Object.values(SCORE.notes || {});
+  $("#notesBlock").innerHTML = noteLines.length
+    ? `<span>${noteLines.map(t => `<b>·</b> ${t}`).join("<br><br>")}</span>` : "";
+
+  function buildMixer(){
+    $("#mixer").innerHTML = PARTS.map(p => `
+      <div class="ch" id="ch-${p.id}" style="--hue:${p.hue}">
+        <div class="chead">
+          <div class="badge">${p.id[0].toUpperCase()}</div>
+          <div><div class="cname">${p.label}</div><div class="cwho" id="who-${p.id}">${p.who}</div></div>
+          <div class="btns">
+            <button class="tog" data-solo="${p.id}" aria-pressed="false" title="Solo ${p.label}">S</button>
+            <button class="tog" data-mute="${p.id}" aria-pressed="false" title="Mute ${p.label}">M</button>
+          </div>
+        </div>
+        <div class="faderow">
+          <input type="range" data-vol="${p.id}" min="0" max="100" value="85" aria-label="${p.label} volume">
+          <div class="val" id="v-${p.id}">85</div>
+        </div>
+        <div class="panrow">
+          <div class="panlab">Pan</div>
+          <input type="range" data-pan="${p.id}" min="-100" max="100" value="${p.pan*100}" aria-label="${p.label} pan">
+          <div class="val" id="p-${p.id}">${panLabel(p.pan)}</div>
+        </div>
+      </div>`).join("");
+
+    $("#myPart").innerHTML = PARTS.filter(p => p.id !== "piano").map(p => `
+      <button class="pick" data-my="${p.id}" aria-pressed="${p.id===myPart}" style="color:${p.hue}">
+        <b>${p.id[0].toUpperCase()}</b><span>${p.id[0].toUpperCase()+p.id.slice(1)}</span>
+      </button>`).join("") + `<button class="pick" data-my="none" aria-pressed="false"><b>·</b><span>None</span></button>`;
+
+    $("#presets").innerHTML = PRESETS.map(p =>
+      `<button class="chip" data-preset="${p.id}" aria-pressed="${p.id===activePreset}" title="${p.hint}">${p.label}</button>`).join("");
+
+    $("#beats").innerHTML = Array.from({length: beatsPerBar}, (_,i) =>
+      `<div class="beat${i===0?" one":""}" data-beat="${i}"></div>`).join("");
+    $("#barTot").textContent = bars.length;
+
+    $("#sections").innerHTML = sections.map(s => `
+      <button class="chip" data-section="${s.id}" aria-pressed="${s.id===currentSectionId}">
+        ${s.label}<span class="pct" id="bpm-${s.id}">${Math.round(s.bpm)}</span>
+      </button>`).join("");
+
+    $("#lineList").innerHTML = SCORE.lines.map(l => `
+      <button class="lineitem" data-line="${l.id}">${l.text || "(empty)"}</button>`).join("");
+    $("#lineCount").textContent = `${SCORE.lines.length} lines`;
+  }
+
+  function renderTempo(){
+    const sec = section(currentSectionId);
+    const t = $("#tempo");
+    if (document.activeElement !== t) t.value = Math.round(sec.bpm);
+    $("#tempoVal").textContent = Math.round(sec.bpm);
+    $("#tempoLive").textContent = Math.round(sec.bpm) + " BPM · " + sec.label;
+    document.querySelectorAll("[data-section]").forEach(b => {
+      b.setAttribute("aria-pressed", b.dataset.section === currentSectionId);
+      const el = document.getElementById("bpm-" + b.dataset.section);
+      if (el) el.textContent = Math.round(section(b.dataset.section).bpm);
+    });
+  }
+
+  function rebuildTempoMap(){
+    tempoMap = makeTempoMap(sections, totalQuarters);
+    bars.length = 0;
+    SCORE.measures.forEach(m => bars.push(tempoMap.secondsAt(m.quarter)));
+    DUR = tempoMap.secondsAt(totalQuarters);
+    $("#tTot").textContent = fmt(DUR);
+  }
+
+  function setBpm(bpm, sec){
+    sec.bpm = bpm; sec.bpmIsOverride = true;
+    rebuildTempoMap();
+    if (playing) scheduler.reschedule(position());
+    renderTempo();
+  }
+
+  const panLabel = v => Math.abs(v) < 0.03 ? "C" : (v < 0 ? "L" : "R") + Math.round(Math.abs(v)*100);
+
+  function audibleGain(id){
+    const anySolo = PARTS.some(p => state[p.id].solo);
+    const s = state[id];
+    if (s.mute) return 0;
+    if (anySolo && !s.solo) return 0;
+    return s.vol;
+  }
+
+  function ensureNode(p){
+    if (nodes[p.id]) return nodes[p.id];
+    const gain = ctx.createGain(), pan = ctx.createStereoPanner();
+    gain.connect(pan); pan.connect(ctx.destination);
+    synth.connectChannel(gain, p.midiChannel);
+    nodes[p.id] = {gain, pan};
+    return nodes[p.id];
+  }
+  PARTS.forEach(ensureNode);
+
+  function applyMix(){
+    PARTS.forEach(p => {
+      const s = state[p.id], g = audibleGain(p.id), n = nodes[p.id];
+      n.gain.gain.setTargetAtTime(g, ctx.currentTime, 0.02);
+      n.pan.pan.setTargetAtTime(s.pan, ctx.currentTime, 0.02);
+      document.getElementById("ch-"+p.id)?.classList.toggle("off", g === 0);
+      const v = document.getElementById("v-"+p.id); if (v) v.textContent = Math.round(s.vol*100);
+      const pv = document.getElementById("p-"+p.id); if (pv) pv.textContent = panLabel(s.pan);
+      const vs = document.querySelector(`[data-vol="${p.id}"]`);
+      if (vs && +vs.value !== Math.round(s.vol*100)) vs.value = Math.round(s.vol*100);
+      const ps = document.querySelector(`[data-pan="${p.id}"]`);
+      if (ps && +ps.value !== Math.round(s.pan*100)) ps.value = Math.round(s.pan*100);
+      document.querySelector(`[data-solo="${p.id}"]`)?.setAttribute("aria-pressed", s.solo);
+      document.querySelector(`[data-mute="${p.id}"]`)?.setAttribute("aria-pressed", s.mute);
+    });
+  }
+
+  /* ---------- live lookahead scheduler ---------- */
+  let playing = false, startCtxTime = 0, startPos = 0, raf = 0;
+  const LOOKAHEAD = 0.15; // seconds
+
+  // Precompute each part's notes on the SHARED timeline (quarter, dur-seconds-independent;
+  // actual seconds are computed at schedule time from the live tempo map).
+  const partNotes = {};
+  PARTS.forEach(p => {
+    partNotes[p.id] = p.notes.map(n => ({
+      quarter: p.id === "piano" ? n.quarter : warp(n.quarter),
+      endQuarter: p.id === "piano" ? n.quarter + n.duration : warp(n.quarter + n.duration),
+      pitch: n.pitch, velocity: n.velocity,
+    })).sort((a,b) => a.quarter - b.quarter);
+  });
+
+  const scheduler = {
+    cursor: {}, // part id -> next note index to consider
+    reset(fromQuarter){
+      PARTS.forEach(p => {
+        const notes = partNotes[p.id];
+        let i = 0; while (i < notes.length && notes[i].quarter < fromQuarter) i++;
+        this.cursor[p.id] = i;
+      });
+    },
+    reschedule(fromSeconds){
+      this.reset(tempoMap.quarterAt(fromSeconds));
+    },
+    tick(){
+      if (!playing) return;
+      const nowSec = position();
+      const aheadSec = nowSec + LOOKAHEAD;
+      PARTS.forEach(p => {
+        const notes = partNotes[p.id];
+        let i = this.cursor[p.id];
+        while (i < notes.length){
+          const n = notes[i];
+          const onSec = tempoMap.secondsAt(n.quarter);
+          if (onSec > aheadSec) break;
+          const offSec = tempoMap.secondsAt(n.endQuarter);
+          const when = Math.max(0, onSec - nowSec);
+          const dur = Math.max(0.02, offSec - onSec);
+          if (synth.noteOn) synth.noteOn(p.midiChannel, n.pitch, n.velocity);
+          if (synth.noteOff) setTimeout(() => synth.noteOff(p.midiChannel, n.pitch), Math.max(0, dur*1000));
+          i++;
+        }
+        this.cursor[p.id] = i;
+      });
+    },
+  };
+
+  function position(){ return playing ? startPos + (ctx.currentTime - startCtxTime) : startPos; }
+
+  function seekTo(atSeconds){
+    startPos = atSeconds; startCtxTime = ctx.currentTime;
+    scheduler.reschedule(atSeconds);
+    if (playing && !loopRunning) loopFrame();
+  }
+
+  let countInTimers = [];
+  function clearCountIn(){ countInTimers.forEach(clearTimeout); countInTimers = []; }
+  function tick(strong){
+    if (!clickOn) return;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = strong ? 1600 : 1100;
+    g.gain.setValueAtTime(strong ? 0.16 : 0.09, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0005, ctx.currentTime + 0.06);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.07);
+  }
+
+  async function play(){
+    if (ctx.state === "suspended") await ctx.resume();
+    const at = position();
+    if (clickOn){
+      const sec = section(sectionAt(tempoMap.quarterAt(at)).id);
+      const spb = 60 / sec.bpm;
+      for (let i=0;i<beatsPerBar;i++)
+        countInTimers.push(setTimeout(() => { tick(i===0); showBeat(i); }, i*spb*1000));
+      countInTimers.push(setTimeout(() => reallyStart(at), beatsPerBar*spb*1000));
+    } else reallyStart(at);
+    playing = true; setPlayIcon(true);
+  }
+  function reallyStart(at){ if (playing) seekTo(at); }
+
+  function pause(){
+    const p = position();
+    clearCountIn(); playing = false; loopRunning = false;
+    startPos = Math.min(p, DUR);
+    cancelAnimationFrame(raf); setPlayIcon(false); render();
+  }
+
+  const barLen = i => (i+1 < bars.length ? bars[i+1] : DUR) - bars[i];
+  function setPlayIcon(on){
+    $("#playIcon").innerHTML = on ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+    $("#play").setAttribute("aria-label", on ? "Pause" : "Play");
+  }
+
+  let lastBeat = -1, loopRunning = false, loopA = 0, loopB = bars.length - 1;
+  function loopFrame(){
+    loopRunning = true;
+    const pos = position();
+    if (loopOn && pos >= bars[loopB]) seekTo(bars[loopA]);
+    else if (pos >= DUR) { pause(); startPos = 0; render(); return; }
+    scheduler.tick();
+    render();
+    const bi = barIndex(pos);
+    const b = Math.floor((pos - bars[bi]) / (barLen(bi)/beatsPerBar));
+    const key = bi*100+b;
+    if (key !== lastBeat){ lastBeat = key; if (clickOn && playing) tick(b===0); }
+    raf = requestAnimationFrame(loopFrame);
+  }
+  function barIndex(pos){ let i=0; while (i+1<bars.length && bars[i+1]<=pos) i++; return i; }
+
+  function render(){
+    const pos = Math.min(position(), DUR);
+    const bi = barIndex(pos);
+    $("#barNum").textContent = bi + 1;
+    const within = (pos - bars[bi]) / (barLen(bi)/beatsPerBar);
+    const beat = Math.max(0, Math.min(beatsPerBar-1, Math.floor(within)));
+    showBeat(playing ? beat : -1);
+    $("#tCur").textContent = fmt(pos);
+    const sc = $("#scrub");
+    if (document.activeElement !== sc) sc.value = Math.round(pos/DUR*1000);
+    renderLyrics(pos);
+    const quarter = tempoMap.quarterAt(pos);
+    const here = sectionAt(quarter).id;
+    if (here !== currentSectionId){ currentSectionId = here; renderTempo(); }
+  }
+  const fmt = s => Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+  function showBeat(i){ document.querySelectorAll(".beat").forEach((el,idx)=>el.classList.toggle("on", idx===i)); }
+
+  function renderLyrics(pos){
+    const quarter = tempoMap.quarterAt(pos);
+    let idx = -1;
+    for (let i=0;i<SCORE.lyrics.length;i++) if (warp(SCORE.lyrics[i].quarter) <= quarter + 0.05) idx = i;
+    $("#lyrNow").textContent = idx >= 0 ? SCORE.lyrics[idx].text : "—";
+    document.querySelectorAll(".lineitem").forEach(el => {
+      const lid = +el.dataset.line;
+      el.classList.toggle("current", idx >= 0 && SCORE.lyrics[idx].lineId === lid);
+    });
+  }
+
+  function jumpToLine(lineId){
+    const line = SCORE.lines.find(l => l.id === lineId);
+    if (!line) return;
+    const sharedQ = warp(line.quarter);
+    const at = tempoMap.secondsAt(sharedQ);
+    if (playing) seekTo(at); else { startPos = at; render(); }
+  }
+
+  function jumpToSection(id){
+    currentSectionId = id;
+    const at = tempoMap.secondsAt(section(id).startQuarter);
+    if (playing) seekTo(at); else { startPos = at; render(); }
+    renderTempo();
+  }
+
+  function applyPreset(id){
+    activePreset = id;
+    const mine = myPart;
+    PARTS.forEach(p => {
+      const s = state[p.id], isMine = p.id === mine, isPiano = p.id === "piano";
+      s.mute = false; s.solo = false; s.pan = p.pan;
+      if (id === "full")      s.vol = 0.85;
+      else if (id === "loud") s.vol = isMine ? 1 : (isPiano ? 0.5 : 0.28);
+      else if (id === "only") s.vol = isMine ? 1 : (isPiano ? 0.35 : 0);
+      else if (id === "drop") s.vol = isMine ? 0 : 0.9;
+      else if (id === "wide"){ s.vol = 0.85; s.pan = isPiano ? 0 : p.pan * 1.7; }
+      s.pan = Math.max(-1, Math.min(1, s.pan));
+    });
+    document.querySelectorAll("[data-preset]").forEach(b => b.setAttribute("aria-pressed", b.dataset.preset === id));
+    applyMix(); markMine();
+  }
+  function markMine(){
+    PARTS.forEach(p => {
+      document.getElementById("ch-"+p.id)?.classList.toggle("mine", p.id === myPart);
+      const who = document.getElementById("who-"+p.id);
+      if (who) who.textContent = p.id === myPart ? "Your line" : p.who;
+    });
+    document.querySelectorAll("[data-my]").forEach(b => b.setAttribute("aria-pressed", b.dataset.my === myPart));
+  }
+  function clearPreset(){
+    activePreset = null;
+    document.querySelectorAll("[data-preset]").forEach(b => b.setAttribute("aria-pressed", false));
+  }
+
+  function wire(){
+    document.addEventListener("input", e => {
+      const t = e.target;
+      if (t.dataset.vol){ state[t.dataset.vol].vol = t.value/100; clearPreset(); applyMix(); }
+      if (t.dataset.pan){ state[t.dataset.pan].pan = t.value/100; clearPreset(); applyMix(); }
+      if (t.id === "scrub"){
+        const at = t.value/1000*DUR;
+        if (playing) seekTo(at); else { startPos = at; render(); }
+      }
+      if (t.id === "tempo") setBpm(+t.value, section(currentSectionId));
+    });
+    document.addEventListener("click", async e => {
+      const t = e.target.closest("button"); if (!t) return;
+      if (t.dataset.solo){ const s=state[t.dataset.solo]; s.solo=!s.solo; clearPreset(); applyMix(); }
+      if (t.dataset.mute){ const s=state[t.dataset.mute]; s.mute=!s.mute; clearPreset(); applyMix(); }
+      if (t.dataset.my){ myPart = t.dataset.my; markMine(); if (activePreset) applyPreset(activePreset); }
+      if (t.dataset.preset) applyPreset(t.dataset.preset);
+      if (t.dataset.section) jumpToSection(t.dataset.section);
+      if (t.dataset.line) jumpToLine(+t.dataset.line);
+      if (t.id === "play") playing ? pause() : play();
+      if (t.id === "loopBtn"){
+        loopOn = !loopOn; t.setAttribute("aria-pressed", loopOn);
+        $("#loopLbl").textContent = loopOn ? `Bars ${loopA+1}–${loopB+1}` : "Loop";
+        $("#loopInfo").textContent = loopOn ? ` · looping ${loopA+1}–${loopB+1}` : "";
+        if (loopOn && playing) seekTo(bars[loopA]);
+      }
+      if (t.id === "clickBtn"){ clickOn = !clickOn; t.setAttribute("aria-pressed", clickOn); }
+      if (t.id === "panBtn"){
+        const on = t.getAttribute("aria-pressed") !== "true";
+        t.setAttribute("aria-pressed", on);
+        $("#mixer").classList.toggle("showpan", on);
+      }
+    });
+  }
+
+  buildMixer(); wire(); applyPreset("full"); markMine(); renderTempo();
+  scheduler.reset(0);
+  $("#tTot").textContent = fmt(DUR);
+  render();
+
+  // exposed for tests
+  window.__app = { position, play, pause, jumpToLine, jumpToSection, setBpm, section, sections, DUR: () => DUR };
+}
+
+$("#retryBtn").addEventListener("click", loadEverything);
+loadEverything();
+</script>
