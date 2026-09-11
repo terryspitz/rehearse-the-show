@@ -29,8 +29,6 @@
   </header>
 
   <main class="body" id="mainBody" hidden>
-    <div class="notice" id="notesBlock"></div>
-
     <section class="block admin" id="adminPanel" hidden>
       <div class="h2row">
         <h2>Admin</h2>
@@ -486,9 +484,6 @@ function initApp(SCORE, ctx, synth){
 
   $("#songTitle").textContent = SCORE.title;
   $("#showName").textContent = SCORE.show;
-  const noteLines = Object.values(SCORE.notes || {});
-  $("#notesBlock").innerHTML = noteLines.length
-    ? `<span>${noteLines.map(t => `<b>·</b> ${t}`).join("<br><br>")}</span>` : "";
 
   function buildMixer(){
     $("#mixer").innerHTML = PARTS.map(p => `
