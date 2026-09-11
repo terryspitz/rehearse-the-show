@@ -119,6 +119,14 @@
   </div>
 </div>
 
+<script type="importmap">
+{
+  "imports": {
+    "spessasynth_core": "https://cdn.jsdelivr.net/npm/spessasynth_core@4.3.22/dist/index.js",
+    "stb-vorbis": "https://cdn.jsdelivr.net/npm/stb-vorbis@0.0.6/dist/index.js"
+  }
+}
+</script>
 <script type="module">
 /* No Claude/window.claude dependency. Fetches lbal-score.json (which now
    embeds every part's note list directly -- no separate MIDI/audio files)
@@ -163,12 +171,14 @@ function driveErrText(err){
 // code loads the real library dynamically.
 async function loadSynthEngine(soundfontBytes){
   if (window.__mockSynthEngine) return window.__mockSynthEngine(soundfontBytes);
-  const { Synthetizer } = await import("https://cdn.jsdelivr.net/npm/spessasynth_lib@4/dist/index.js");
+  const { WorkletSynthesizer } = await import("https://cdn.jsdelivr.net/npm/spessasynth_lib@4.3.14/dist/index.js");
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
   await ctx.audioWorklet.addModule(
-    "https://cdn.jsdelivr.net/npm/spessasynth_lib@4/dist/worklet_processor.min.js"
+    "https://cdn.jsdelivr.net/npm/spessasynth_lib@4.3.14/dist/spessasynth_processor.min.js"
   );
-  const synth = new Synthetizer(ctx.destination, soundfontBytes, false, undefined, { enableEffects: false });
+  const synth = new WorkletSynthesizer(ctx, { enableEffects: false });
+  await synth.isReady;
+  await synth.soundBankManager.addSoundBank(soundfontBytes, "main");
   return { ctx, synth };
 }
 
@@ -560,6 +570,7 @@ function initApp(SCORE, ctx, synth){
     const gain = ctx.createGain(), pan = ctx.createStereoPanner();
     gain.connect(pan); pan.connect(ctx.destination);
     synth.connectChannel(gain, p.midiChannel);
+    if (synth.programChange) synth.programChange(p.midiChannel, p.midiProgram);
     nodes[p.id] = {gain, pan};
     return nodes[p.id];
   }
