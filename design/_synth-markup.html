@@ -307,6 +307,8 @@ function initAdminPanel(SCORE){
       </div>`).join("");
   }
 
+  const attrEscape = s => (s || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+
   function renderLines(){
     $("#adminLines").innerHTML = working.lines.map((l, i) => {
       const words = (l.text || "").split(" ");
@@ -314,7 +316,8 @@ function initAdminPanel(SCORE){
         `<span class="adminword" data-split-line="${i}" data-split-word="${wi}">${w}</span>`).join(" ");
       return `<div class="adminrow adminline">
         <label class="adminconfirm"><input type="checkbox" data-line-confirmed="${i}" ${l.confirmed?"checked":""}> confirmed</label>
-        <div class="adminlinetext">${wordSpans}</div>
+        <input type="text" class="adminlinetextedit" data-line-text="${i}" value="${attrEscape(l.text)}" placeholder="Retype the correct lyric here" aria-label="Line ${i+1} text">
+        <div class="adminlinetext">${wordSpans}<span class="adminhint">tap a word to split the line there</span></div>
         ${i < working.lines.length - 1 ? `<button class="mini" data-merge-line="${i}">Merge ↓</button>` : ""}
       </div>`;
     }).join("");
@@ -340,6 +343,7 @@ function initAdminPanel(SCORE){
       working.sections[+t.dataset.secBpm].bpmIsOverride = true;
     }
     if (t.dataset.lineConfirmed !== undefined) working.lines[+t.dataset.lineConfirmed].confirmed = t.checked;
+    if (t.dataset.lineText !== undefined) working.lines[+t.dataset.lineText].text = t.value;
     if (t.dataset.knotV !== undefined) working.vocalAlignment.knots[+t.dataset.knotV][0] = +t.value;
     if (t.dataset.knotS !== undefined) working.vocalAlignment.knots[+t.dataset.knotS][1] = +t.value;
   });
