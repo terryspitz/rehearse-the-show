@@ -1,0 +1,1205 @@
+<title>Rehearse the Show</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ink:#F7F5F0; --surface:#FFFFFF; --raise:#FBFAF7; --line:#E3DFD6; --line-2:#CFC9BC;
+  --text:#151A21; --muted:#67707C; --accent:#B8791B; --accent-ink:#FFFFFF;
+  --p-s:#1E86AC; --p-a:#7B45B8; --p-t:#2F7C43; --p-b:#C1382A; --p-k:#5C6B7C;
+  --shadow:0 1px 2px rgba(20,26,34,.08), 0 8px 24px -12px rgba(20,26,34,.18);
+  --track:#E3DFD6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#0E1218; --surface:#161C25; --raise:#1D2530; --line:#28313D; --line-2:#3A4654;
+    --text:#E9EEF5; --muted:#8D9BAC; --accent:#F2A83C; --accent-ink:#191007;
+    --p-s:#4FC3E8; --p-a:#C08BF0; --p-t:#6BBF7A; --p-b:#EE6A5F; --p-k:#8A9AAC;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -14px rgba(0,0,0,.7);
+    --track:#28313D;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#0E1218; --surface:#161C25; --raise:#1D2530; --line:#28313D; --line-2:#3A4654;
+  --text:#E9EEF5; --muted:#8D9BAC; --accent:#F2A83C; --accent-ink:#191007;
+  --p-s:#4FC3E8; --p-a:#C08BF0; --p-t:#6BBF7A; --p-b:#EE6A5F; --p-k:#8A9AAC;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px -14px rgba(0,0,0,.7);
+  --track:#28313D;
+}
+
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{
+  margin:0; background:var(--ink); color:var(--text);
+  font:400 15px/1.5 "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.shell{max-width:430px; margin:0 auto; min-height:100vh; background:var(--ink);
+  border-inline:1px solid var(--line); display:flex; flex-direction:column;}
+@media (max-width:440px){ .shell{border-inline:none} }
+
+/* ---------- header ---------- */
+.top{position:sticky; top:0; z-index:20; background:var(--surface);
+  border-bottom:1px solid var(--line); padding:12px 16px 10px;}
+.eyebrow{font:500 10px/1 "IBM Plex Sans",sans-serif; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted);}
+.songrow{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-top:5px;}
+.song{font:500 25px/1.05 Oswald, "Arial Narrow", sans-serif; letter-spacing:.01em; text-wrap:balance;}
+.keysig{font:400 12px/1 "IBM Plex Mono",ui-monospace,monospace; color:var(--muted); white-space:nowrap;}
+.counter{display:flex; align-items:center; gap:14px; margin-top:10px;}
+.bigbar{font:500 30px/1 "IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;}
+.bigbar small{font-size:12px; color:var(--muted); font-weight:400; margin-left:3px}
+.beats{display:flex; gap:5px; margin-left:auto}
+.beat{width:9px; height:9px; border-radius:50%; background:var(--track);
+  transition:background .07s linear, transform .07s linear}
+.beat.on{background:var(--muted)}
+.beat.on.one{background:var(--accent); transform:scale(1.35)}
+
+/* ---------- scroll body ---------- */
+.body{flex:1; padding:16px 16px 128px; display:flex; flex-direction:column; gap:20px}
+.block{display:flex; flex-direction:column; gap:9px}
+h2{font:500 11px/1 "IBM Plex Sans",sans-serif; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--muted); margin:0}
+.h2row{display:flex; align-items:center; justify-content:space-between; gap:12px}
+.mini{appearance:none; border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  border-radius:7px; padding:5px 10px; font:500 10px/1 inherit; font-family:inherit; cursor:pointer;
+  letter-spacing:.1em; text-transform:uppercase; transition:background .15s,color .15s,border-color .15s}
+.mini[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.mini:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* ---------- my part ---------- */
+.parts-pick{display:grid; grid-template-columns:repeat(5,1fr); gap:6px}
+.pick{appearance:none; border:1px solid var(--line); background:var(--surface); color:var(--muted);
+  border-radius:9px; padding:9px 0 8px; cursor:pointer; display:flex; flex-direction:column;
+  align-items:center; gap:3px; font-family:inherit; transition:border-color .15s, color .15s, background .15s}
+.pick b{font:600 15px/1 Oswald,"Arial Narrow",sans-serif}
+.pick span{font-size:9px; letter-spacing:.06em; text-transform:uppercase}
+.pick[aria-pressed="true"]{background:var(--raise); color:var(--text); border-color:currentColor}
+.pick:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* ---------- admin panel ---------- */
+.block.admin{background:var(--raise); border:1px solid var(--line); border-radius:12px; padding:12px}
+.adminsub{margin-top:14px}
+.adminsub h3{font:500 11px/1 "IBM Plex Sans",sans-serif; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); margin:0 0 8px}
+.adminhint{font:400 10.5px/1 inherit; color:var(--muted); text-transform:none; letter-spacing:0; margin-left:6px}
+.adminrow{display:flex; align-items:center; gap:8px; padding:6px 0; flex-wrap:wrap;
+  border-bottom:1px dashed var(--line)}
+.adminrow:last-child{border-bottom:none}
+.adminrowlabel{font-size:12px; font-weight:500; min-width:110px}
+.adminline{align-items:flex-start; flex-direction:column}
+.adminlinetextedit{width:100%; font:400 13px/1.3 inherit; padding:7px 9px; border-radius:8px;
+  border:1px solid var(--line-2); background:var(--surface); color:var(--text)}
+.adminlinetext{flex:1; font-size:12.5px; line-height:1.6}
+.adminword{cursor:pointer; padding:1px 2px; border-radius:3px}
+.adminword:hover{background:color-mix(in srgb, var(--accent) 20%, transparent)}
+.adminconfirm{font-size:11px; color:var(--muted); display:flex; align-items:center; gap:4px; white-space:nowrap}
+.adminsave{width:100%; border-radius:10px; height:44px; margin-top:16px; font:500 14px/1 inherit}
+.rollpart{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11px; margin:6px 0 4px; color:var(--muted)}
+.rollwrap{overflow-x:auto; overflow-y:hidden; border:1px solid var(--line); border-radius:8px; background:var(--surface); -webkit-overflow-scrolling:touch}
+#adminRoll{display:block; touch-action:none}
+.rollnote{rx:1.5}
+.rollpiano{fill:var(--p-k)}
+.rollvocal{fill:var(--accent)}
+.barline{stroke:var(--line); stroke-width:1}
+.barnum{font-size:8px; fill:var(--muted)}
+.rolllabel{font-size:9px; fill:var(--muted); text-transform:uppercase; letter-spacing:.06em}
+.knotline{stroke:var(--p-b); stroke-width:1.5; stroke-dasharray:3 2; opacity:.7}
+.knothandle{fill:var(--p-b); cursor:ew-resize}
+select, input[type=number]{font:400 12px/1 "IBM Plex Sans",sans-serif; padding:5px 7px;
+  border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--text)}
+
+/* ---------- standalone load screen ---------- */
+.loadscreen{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px}
+.loadbox{max-width:340px; text-align:center; display:flex; flex-direction:column; gap:10px; align-items:center}
+.loadtitle{font:500 18px/1.3 Oswald,"Arial Narrow",sans-serif}
+.loadmsg{font-size:13px; line-height:1.5; color:var(--muted)}
+
+/* ---------- drive panel ---------- */
+.drivebody{display:flex; flex-direction:column; gap:10px}
+.drivehint{margin:0; font-size:11.5px; line-height:1.5; color:var(--muted)}
+.drivehint b{color:var(--text); font-weight:500}
+.drivehint.error{color:var(--p-b)}
+.drivehint code{font:400 10.5px/1 "IBM Plex Mono",monospace; background:var(--raise);
+  padding:1px 4px; border-radius:4px; border:1px solid var(--line)}
+.drivegroup{display:flex; flex-direction:column; gap:2px}
+.drivelabel{font:500 10px/1 "IBM Plex Sans",sans-serif; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:4px}
+.driverow{padding:8px 10px; background:var(--surface); border:1px solid var(--line); border-radius:9px}
+.driverow + .driverow{margin-top:5px}
+.driverowmain{font-size:12.5px; font-weight:500}
+.driverowsub{font-size:11px; color:var(--muted); margin-top:2px}
+.driverowsub a{color:var(--accent)}
+
+/* ---------- presets ---------- */
+.chips{display:flex; gap:7px; overflow-x:auto; padding-bottom:3px; scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{appearance:none; white-space:nowrap; border:1px solid var(--line); background:var(--surface);
+  color:var(--text); border-radius:999px; padding:9px 14px; font:500 13px/1 inherit; cursor:pointer;
+  font-family:inherit; transition:background .15s, border-color .15s}
+.chip[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
+.chip:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.chip .pct{margin-left:8px; font:400 11px/1 "IBM Plex Mono",ui-monospace,monospace;
+  opacity:.7; font-variant-numeric:tabular-nums}
+.tempolive{font:500 12px/1 "IBM Plex Mono",ui-monospace,monospace; color:var(--muted);
+  font-variant-numeric:tabular-nums}
+
+/* ---------- mixer ---------- */
+.mixer{display:flex; flex-direction:column; gap:8px}
+.ch{background:var(--surface); border:1px solid var(--line); border-radius:12px;
+  padding:11px 13px 12px; box-shadow:var(--shadow); position:relative; overflow:hidden}
+.ch::before{content:""; position:absolute; inset:0 auto 0 0; width:3px; background:var(--hue)}
+.ch.mine{border-color:var(--hue)}
+.ch.off{opacity:.45}
+.chead{display:flex; align-items:center; gap:10px}
+.badge{width:26px; height:26px; border-radius:7px; display:grid; place-items:center; flex:none;
+  background:color-mix(in srgb, var(--hue) 18%, transparent); color:var(--hue);
+  font:600 14px/1 Oswald,"Arial Narrow",sans-serif}
+.cname{font-weight:500; font-size:14px}
+.cwho{font-size:11px; color:var(--muted); margin-top:1px}
+.btns{margin-left:auto; display:flex; gap:6px}
+.tog{appearance:none; width:34px; height:30px; border-radius:8px; border:1px solid var(--line);
+  background:var(--raise); color:var(--muted); font:600 11px/1 inherit; font-family:inherit;
+  cursor:pointer; letter-spacing:.04em; transition:background .13s, color .13s, border-color .13s}
+.tog[aria-pressed="true"]{background:var(--hue); border-color:var(--hue); color:var(--ink)}
+.tog:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.faderow{display:flex; align-items:center; gap:10px; margin-top:10px}
+.val{font:400 11px/1 "IBM Plex Mono",ui-monospace,monospace; color:var(--muted);
+  font-variant-numeric:tabular-nums; width:30px; text-align:right; flex:none}
+.panrow{display:none; align-items:center; gap:10px; margin-top:9px;
+  padding-top:9px; border-top:1px dashed var(--line)}
+.mixer.showpan .panrow{display:flex}
+.panlab{font:500 9px/1 inherit; letter-spacing:.1em; text-transform:uppercase; color:var(--muted);
+  width:30px; flex:none}
+
+input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:26px;
+  background:transparent; cursor:pointer; margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:5px; border-radius:3px; background:var(--track)}
+input[type=range]::-moz-range-track{height:5px; border-radius:3px; background:var(--track)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none; width:22px; height:22px;
+  border-radius:50%; background:var(--hue,var(--accent)); margin-top:-8.5px;
+  border:2px solid var(--surface); box-shadow:0 1px 3px rgba(0,0,0,.35)}
+input[type=range]::-moz-range-thumb{width:22px; height:22px; border:2px solid var(--surface);
+  border-radius:50%; background:var(--hue,var(--accent)); box-shadow:0 1px 3px rgba(0,0,0,.35)}
+input[type=range]:focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:6px}
+
+/* ---------- lyrics ---------- */
+.lyr{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 15px;
+  min-height:104px; display:flex; flex-direction:column; justify-content:center; gap:7px}
+.lyr .line{font:400 17px/1.42 "IBM Plex Sans",sans-serif; color:var(--muted); transition:color .2s}
+.lyr .line.now{color:var(--text)}
+.lyr .syl.sung{color:var(--p-s); font-weight:500}
+.lyr .who{font:500 10px/1 inherit; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+
+/* ---------- lyric-line list (jump-to-line navigation) ---------- */
+.linelist{display:flex; flex-direction:column; gap:4px; max-height:260px; overflow-y:auto}
+.lineitem{appearance:none; text-align:left; border:1px solid transparent; background:transparent;
+  color:var(--muted); border-radius:8px; padding:7px 9px; font:400 12.5px/1.4 "IBM Plex Sans",sans-serif;
+  cursor:pointer; transition:background .13s, color .13s}
+.lineitem:hover{background:var(--raise)}
+.lineitem.current{background:color-mix(in srgb, var(--accent) 12%, transparent); color:var(--text); font-weight:500}
+.lineitem:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+/* ---------- transport ---------- */
+.tp{position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:430px;
+  background:var(--surface); border-top:1px solid var(--line); z-index:30;
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  box-shadow:0 -8px 28px -18px rgba(0,0,0,.7)}
+.loopbar{display:flex; align-items:center; gap:9px; margin-bottom:9px}
+.loopbtn{appearance:none; border:1px solid var(--line); background:var(--raise); color:var(--muted);
+  border-radius:8px; padding:7px 11px; font:500 12px/1 inherit; font-family:inherit; cursor:pointer;
+  display:flex; align-items:center; gap:6px; transition:background .15s, color .15s, border-color .15s}
+.loopbtn[aria-pressed="true"]{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+.loopbtn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.scrub{flex:1; --hue:var(--accent)}
+.tpmain{display:flex; align-items:center; gap:12px}
+.play{appearance:none; width:56px; height:56px; flex:none; border-radius:50%; border:none;
+  background:var(--accent); color:var(--accent-ink); cursor:pointer; display:grid; place-items:center;
+  box-shadow:0 3px 12px -3px color-mix(in srgb, var(--accent) 55%, transparent)}
+.play:focus-visible{outline:2px solid var(--text); outline-offset:3px}
+.play svg{width:23px; height:23px; fill:currentColor}
+.tpmeta{display:flex; flex-direction:column; gap:3px; flex:1; min-width:0}
+.time{font:400 12px/1 "IBM Plex Mono",ui-monospace,monospace; color:var(--muted);
+  font-variant-numeric:tabular-nums}
+.tempo{display:flex; align-items:center; gap:9px}
+.tempo .val{width:52px}
+.tempo input{--hue:var(--muted)}
+
+.note{font-size:12px; line-height:1.55; color:var(--muted); border-top:1px solid var(--line);
+  padding-top:14px}
+.note b{color:var(--text); font-weight:500}
+.note code{font:400 11px/1 "IBM Plex Mono",monospace; background:var(--raise);
+  padding:2px 5px; border-radius:4px; border:1px solid var(--line)}
+.note p{margin:0 0 9px}
+.note p:last-child{margin-bottom:0}
+@media (prefers-reduced-motion:reduce){ *{transition:none !important; animation:none !important} }
+</style>
+
+<div class="shell">
+  <div class="loadscreen" id="loadScreen">
+    <div class="loadbox">
+      <div class="loadtitle" id="loadTitle">Loading your show…</div>
+      <div class="loadmsg" id="loadMsg">Fetching the song data from Google Drive.</div>
+      <button class="mini" id="retryBtn" hidden>Retry</button>
+    </div>
+  </div>
+
+  <div class="loadscreen" id="adminGate" hidden>
+    <div class="loadbox">
+      <div class="loadtitle">Admin sign-in</div>
+      <div class="loadmsg">Sign in with the Google account that owns the Drive folder to correct sections, tempo, alignment and lyric lines.</div>
+      <button class="mini" id="adminSignInBtn">Sign in with Google</button>
+      <div class="loadmsg" id="adminAuthMsg"></div>
+    </div>
+  </div>
+
+  <header class="top" id="topBar" hidden>
+    <div class="eyebrow">Rehearsal mix · Bar-by-bar</div>
+    <div class="songrow">
+      <div class="song" id="songTitle">—</div>
+      <div class="keysig" id="showName">—</div>
+    </div>
+    <div class="counter">
+      <div class="bigbar"><span id="barNum">1</span><small>/<span id="barTot">1</span></small></div>
+      <div class="beats" id="beats"></div>
+    </div>
+  </header>
+
+  <main class="body" id="mainBody" hidden>
+    <section class="block admin" id="adminPanel" hidden>
+      <div class="h2row">
+        <h2>Admin</h2>
+        <div class="tempolive" id="adminSaveStatus"></div>
+      </div>
+
+      <div class="adminsub">
+        <h3>Sections</h3>
+        <div id="adminSections"></div>
+      </div>
+
+      <div class="adminsub">
+        <h3>Lyric lines <span class="adminhint">tap a word to split a line there</span></h3>
+        <div id="adminLines"></div>
+      </div>
+
+      <div class="adminsub">
+        <h3>Vocal ↔ piano alignment <span class="adminhint">drag a marker to slide the vocal there; tap the roll to preview</span></h3>
+        <div class="rollpart">
+          <label>Vocal part: <select data-roll-part id="adminRollPart"></select></label>
+          <button class="mini" id="adminStopPreview">Stop preview</button>
+        </div>
+        <div class="rollwrap"><svg id="adminRoll"></svg></div>
+        <div id="adminKnots"></div>
+        <button class="mini" id="adminAddKnot">+ Add point</button>
+      </div>
+
+      <button class="play adminsave" id="adminSaveBtn">Save to Drive</button>
+    </section>
+
+    <section class="block">
+      <h2>I'm singing</h2>
+      <div class="parts-pick" id="myPart"></div>
+    </section>
+
+    <section class="block">
+      <h2>Balance</h2>
+      <div class="chips" id="presets"></div>
+    </section>
+
+    <section class="block">
+      <div class="h2row">
+        <h2>Tempo</h2>
+        <div class="tempolive" id="tempoLive">— BPM</div>
+      </div>
+      <div class="chips" id="sections"></div>
+    </section>
+
+    <section class="block">
+      <div class="h2row">
+        <h2>Mixer</h2>
+        <button class="mini" id="panBtn" aria-pressed="false">Stereo</button>
+      </div>
+      <div class="mixer" id="mixer"></div>
+    </section>
+
+    <section class="block">
+      <div class="h2row">
+        <h2>Words</h2>
+        <div class="tempolive" id="lineCount"></div>
+      </div>
+      <div class="lyr" id="lyricsNow">
+        <div class="who" id="lyrWho">Sky (solo)</div>
+        <div class="line now" id="lyrNow">—</div>
+      </div>
+      <div class="linelist" id="lineList"></div>
+    </section>
+  </main>
+
+  <div class="tp" id="transport" hidden>
+    <div class="loopbar">
+      <button class="loopbtn" id="loopBtn" aria-pressed="false">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 01-4 4H3"/></svg>
+        <span id="loopLbl">Loop</span>
+      </button>
+      <input type="range" class="scrub" id="scrub" min="0" max="1000" value="0" aria-label="Position">
+      <button class="loopbtn" id="clickBtn" aria-pressed="true" title="Count-in and click">Click</button>
+    </div>
+    <div class="tpmain">
+      <button class="play" id="play" aria-label="Play">
+        <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="tpmeta">
+        <div class="time"><span id="tCur">0:00</span> / <span id="tTot">0:00</span><span id="loopInfo"></span></div>
+        <div class="tempo">
+          <input type="range" id="tempo" min="40" max="200" value="60" aria-label="Tempo (BPM)">
+          <div class="val" id="tempoVal">60</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "spessasynth_core": "https://cdn.jsdelivr.net/npm/spessasynth_core@4.3.22/dist/index.js",
+    "stb-vorbis": "https://cdn.jsdelivr.net/npm/stb-vorbis@0.0.6/dist/index.js"
+  }
+}
+</script>
+<script type="module">
+/* No Claude/window.claude dependency. Fetches lbal-score.json (which now
+   embeds every part's note list directly -- no separate MIDI/audio files)
+   from a shared Google Drive folder via the public Drive REST API, then
+   synthesizes audio live in the browser via spessasynth_lib, so tempo is a
+   real, independent parameter instead of a resampling trick. See
+   docs/CAST-APP-SETUP.md for one-time setup. */
+
+const API_KEY = "AIzaSyCutp5LsbZTuTgkRtH-NAlq6P5Yip29yQM";
+const DRIVE_FOLDER_ID = "1GXON0YJumc079WF5TWvb34GxN6iAXlsW"; // "Guys and Dolls / lbal"
+const SOUNDFONT_NAME = "voices_3.sf2";
+
+// Only needed for admin mode (?admin=1) -- a separate one-time setup step
+// from API_KEY: an OAuth 2.0 Client ID (Google Cloud Console -> APIs &
+// Services -> Credentials -> Create Credentials -> OAuth client ID ->
+// "Web application", with this page's URL under Authorized JavaScript
+// origins). Cast members never trigger this path -- API_KEY-only reads
+// stay exactly as they are.
+const ADMIN_CLIENT_ID = "139002740613-q4qim9rdi8f4ao17jnp7k8hsid7hatgl.apps.googleusercontent.com";
+const DRIVE_WRITE_SCOPE = "https://www.googleapis.com/auth/drive";
+
+const $ = s => document.querySelector(s);
+const DRIVE_FILES = "https://www.googleapis.com/drive/v3/files";
+const DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3/files";
+let scoreFileId = null;
+
+async function driveFetchJson(url){
+  const res = await fetch(url);
+  if (!res.ok){ const e = new Error(`Drive request failed (${res.status})`); e.status = res.status; throw e; }
+  return res.json();
+}
+
+function driveErrText(err){
+  const status = err && err.status;
+  if (status === 403) return "Drive returned 403 — either the folder isn't shared as \"Anyone with the link\" yet, or the API key isn't allowed to call the Drive API from this domain.";
+  if (status === 404 || status === "missing_score" || status === "missing_soundfont") return err.message + " — check the folder and file names match what's expected.";
+  if (status === "stale_score") return err.message;
+  if (status === 400) return "Drive rejected the request (400) — the API key is probably missing or malformed.";
+  return (err && err.message) || "Something went wrong talking to Drive.";
+}
+
+// Injected by tests to avoid depending on network/CDN access; production
+// code loads the real library dynamically.
+async function loadSynthEngine(soundfontBytes){
+  if (window.__mockSynthEngine) return window.__mockSynthEngine(soundfontBytes);
+  const { WorkletSynthesizer } = await import("https://cdn.jsdelivr.net/npm/spessasynth_lib@4.3.14/dist/index.js");
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  await ctx.audioWorklet.addModule(
+    "https://cdn.jsdelivr.net/npm/spessasynth_lib@4.3.14/dist/spessasynth_processor.min.js"
+  );
+  const synth = new WorkletSynthesizer(ctx, { enableEffects: false });
+  await synth.isReady;
+  await synth.soundBankManager.addSoundBank(soundfontBytes, "main");
+  return { ctx, synth };
+}
+
+async function loadEverything(){
+  const screen = $("#loadScreen"), title = $("#loadTitle"), msg = $("#loadMsg"), retry = $("#retryBtn");
+  retry.hidden = true;
+  title.textContent = "Loading your show…";
+  msg.textContent = "Fetching the song data from Google Drive.";
+
+  if (!API_KEY || API_KEY === "PASTE_YOUR_GOOGLE_DRIVE_API_KEY_HERE"){
+    title.textContent = "Setup needed";
+    msg.textContent = "This page needs a Google Drive API key before it can load anything — see the setup README next to this file.";
+    return;
+  }
+
+  try {
+    const list = await driveFetchJson(
+      `${DRIVE_FILES}?q=${encodeURIComponent(`'${DRIVE_FOLDER_ID}' in parents and trashed = false`)}&key=${API_KEY}&fields=files(id,name)`
+    );
+    const files = list.files || [];
+    const byName = name => files.find(f => f.name === name);
+
+    const scoreFile = byName("lbal-score.json");
+    if (!scoreFile) throw Object.assign(new Error("lbal-score.json not found in the Drive folder"), {status: "missing_score"});
+    scoreFileId = scoreFile.id;
+    const SCORE = await driveFetchJson(`${DRIVE_FILES}/${scoreFile.id}?alt=media&key=${API_KEY}`);
+    if (!SCORE.parts || !SCORE.parts[0] || !SCORE.parts[0].notes)
+      throw Object.assign(new Error("lbal-score.json in Drive is an old, incompatible version (no embedded note data) — please upload the current one"), {status: "stale_score"});
+
+    msg.textContent = "Loading the instrument sound…";
+    const sfFile = byName(SOUNDFONT_NAME);
+    if (!sfFile) throw Object.assign(new Error(`${SOUNDFONT_NAME} not found in the Drive folder`), {status: "missing_soundfont"});
+    const sfRes = await fetch(`${DRIVE_FILES}/${sfFile.id}?alt=media&key=${API_KEY}`);
+    if (!sfRes.ok) throw Object.assign(new Error(`Couldn't download ${SOUNDFONT_NAME} (${sfRes.status})`), {status: sfRes.status});
+    const soundfontBytes = await sfRes.arrayBuffer();
+
+    const { ctx, synth } = await loadSynthEngine(soundfontBytes);
+
+    // Build the app (wires up every control) BEFORE revealing it or hiding
+    // the load screen, so a bug here surfaces as a normal load error instead
+    // of leaving a visible-but-dead UI with no event listeners attached.
+    initApp(SCORE, ctx, synth);
+
+    screen.hidden = true;
+    $("#topBar").hidden = false;
+    $("#mainBody").hidden = false;
+    $("#transport").hidden = false;
+
+    if (isAdminRequested()) await gateAdmin(SCORE, ctx, synth);
+  } catch (err) {
+    title.textContent = "Couldn't load from Drive";
+    msg.textContent = driveErrText(err);
+    retry.hidden = false;
+  }
+}
+
+/* ================= admin mode (hidden behind ?admin=1) ================= */
+function isAdminRequested(){
+  return new URLSearchParams(location.search).get("admin") === "1";
+}
+
+let adminToken = null;
+
+function gateAdmin(SCORE, ctx, synth){
+  return new Promise(resolve => {
+    const gate = $("#adminGate"), authMsg = $("#adminAuthMsg"), btn = $("#adminSignInBtn");
+    gate.hidden = false;
+
+    if (!ADMIN_CLIENT_ID || ADMIN_CLIENT_ID === "PASTE_YOUR_GOOGLE_OAUTH_CLIENT_ID_HERE"){
+      authMsg.textContent = "Admin mode needs a Google OAuth Client ID set up first — see the setup README.";
+      btn.hidden = true;
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.onload = () => {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: ADMIN_CLIENT_ID,
+        scope: DRIVE_WRITE_SCOPE,
+        callback: (resp) => {
+          if (resp.error){ authMsg.textContent = "Sign-in failed: " + resp.error; return; }
+          adminToken = resp.access_token;
+          gate.hidden = true;
+          initAdminPanel(SCORE, ctx, synth);
+          resolve();
+        },
+      });
+      btn.addEventListener("click", () => client.requestAccessToken());
+    };
+    script.onerror = () => { authMsg.textContent = "Couldn't load Google Sign-In — check your network."; resolve(); };
+    document.head.appendChild(script);
+  });
+}
+
+async function saveScore(score){
+  const status = $("#adminSaveStatus");
+  status.textContent = "Saving…";
+  try {
+    const res = await fetch(`${DRIVE_UPLOAD}/${scoreFileId}?uploadType=media`, {
+      method: "PATCH",
+      headers: { "Authorization": `Bearer ${adminToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify(score),
+    });
+    if (!res.ok) throw new Error(`Drive write failed (${res.status})`);
+    status.textContent = "Saved — reloading…";
+    setTimeout(() => location.reload(), 900);
+  } catch (err) {
+    status.textContent = "Couldn't save: " + err.message;
+  }
+}
+
+function initAdminPanel(SCORE, ctx, synth){
+  const working = JSON.parse(JSON.stringify(SCORE)); // local working copy; only "Save to Drive" persists it
+  $("#adminPanel").hidden = false;
+
+  /* ---- visual piano-roll: see bars/notes for piano vs. the selected vocal
+     part, drag alignment markers, tap to hear the result immediately.
+     Reuses the synth channels initApp() already wired up (ensureNode/
+     connectChannel/programChange ran once at load) -- preview just fires
+     noteOn/noteOff on those same channels, no separate audio graph needed. ---- */
+  const ROLL_SCALE = 14; // px per quarter note
+  const LANE_H = 56, LANE_GAP = 8;
+  const rollPiano = working.parts.find(p => p.id === "piano");
+  let currentVocalId = working.parts.find(p => p.id !== "piano").id;
+
+  function laneRange(notes){
+    const pitches = notes.map(n => n.pitch);
+    return { min: Math.min(...pitches), max: Math.max(...pitches) };
+  }
+  function laneY(pitch, range, top){
+    const span = Math.max(1, range.max - range.min);
+    return top + ((range.max - pitch) / span) * (LANE_H - 6) + 3;
+  }
+  // Wide enough for the last bar AND the furthest knot -- a knot can be
+  // dragged past the last bar while correcting, and an SVG clips (silently,
+  // un-clickably) anything outside its declared width.
+  function rollExtentQ(){
+    return Math.max(
+      working.measures[working.measures.length - 1].quarter,
+      ...working.vocalAlignment.knots.map(k => k[1])
+    ) + 8;
+  }
+
+  function renderRoll(){
+    const svg = $("#adminRoll");
+    const warp = warpFactory(working.vocalAlignment.knots);
+    const vocalPart = working.parts.find(p => p.id === currentVocalId);
+    const pianoRange = laneRange(rollPiano.notes);
+    const vocalRange = laneRange(vocalPart.notes);
+    const vocalTop = LANE_H + LANE_GAP;
+    const totalH = LANE_H * 2 + LANE_GAP;
+    const totalQ = rollExtentQ();
+    const width = totalQ * ROLL_SCALE;
+
+    const bars = working.measures.map((m, i) => {
+      const x = m.quarter * ROLL_SCALE;
+      const num = i % 4 === 0 ? `<text class="barnum" x="${x+2}" y="9">${i+1}</text>` : "";
+      return `<line class="barline" x1="${x}" x2="${x}" y1="0" y2="${totalH}"/>${num}`;
+    }).join("");
+
+    const pianoNotes = rollPiano.notes.map(n =>
+      `<rect class="rollnote rollpiano" x="${n.quarter*ROLL_SCALE}" y="${laneY(n.pitch,pianoRange,0)}" width="${Math.max(2,n.duration*ROLL_SCALE-1)}" height="4"/>`).join("");
+    const vocalNotes = vocalPart.notes.map(n =>
+      `<rect class="rollnote rollvocal" x="${warp(n.quarter)*ROLL_SCALE}" y="${laneY(n.pitch,vocalRange,vocalTop)}" width="${Math.max(2,n.duration*ROLL_SCALE-1)}" height="4"/>`).join("");
+
+    const knots = working.vocalAlignment.knots.map((k, i) => {
+      const x = k[1] * ROLL_SCALE;
+      return `<line class="knotline" x1="${x}" x2="${x}" y1="0" y2="${totalH}"/>` +
+             `<circle class="knothandle" data-knot="${i}" cx="${x}" cy="${totalH+8}" r="7"/>`;
+    }).join("");
+
+    svg.setAttribute("width", width);
+    svg.setAttribute("height", totalH + 18);
+    svg.innerHTML = bars + pianoNotes + vocalNotes + knots +
+      `<text class="rolllabel" x="4" y="10">Piano</text><text class="rolllabel" x="4" y="${vocalTop+10}">${vocalPart.label}</text>`;
+  }
+
+  let previewTimers = [], previewActiveNotes = [];
+  function stopPreview(){
+    previewTimers.forEach(clearTimeout);
+    previewTimers = [];
+    previewActiveNotes.forEach(({channel, pitch}) => synth.noteOff && synth.noteOff(channel, pitch));
+    previewActiveNotes = [];
+  }
+  function playPreviewAt(sharedQuarterCenter){
+    stopPreview();
+    const warp = warpFactory(working.vocalAlignment.knots);
+    const sections = working.sections.map(s => {
+      const line = working.lines.find(l => l.id === s.lineAnchor);
+      return {...s, startQuarter: line ? warp(line.quarter) : 0};
+    }).sort((a,b) => a.startQuarter - b.startQuarter);
+    const totalQ = rollExtentQ();
+    const tempo = makeTempoMap(sections, totalQ);
+
+    const spanQ = 8; // roughly two bars either side of the tapped point
+    const fromQ = Math.max(0, sharedQuarterCenter - spanQ), toQ = sharedQuarterCenter + spanQ;
+    const fromSec = tempo.secondsAt(fromQ);
+    const vocalPart = working.parts.find(p => p.id === currentVocalId);
+
+    function schedule(part, toShared){
+      part.notes.forEach(n => {
+        const q = toShared(n.quarter);
+        if (q < fromQ || q > toQ) return;
+        const onMs = Math.max(0, (tempo.secondsAt(q) - fromSec) * 1000);
+        const offMs = Math.max(onMs + 20, (tempo.secondsAt(toShared(n.quarter + n.duration)) - fromSec) * 1000);
+        previewActiveNotes.push({channel: part.midiChannel, pitch: n.pitch});
+        previewTimers.push(setTimeout(() => synth.noteOn && synth.noteOn(part.midiChannel, n.pitch, n.velocity), onMs));
+        previewTimers.push(setTimeout(() => synth.noteOff && synth.noteOff(part.midiChannel, n.pitch), offMs));
+      });
+    }
+    schedule(rollPiano, q => q);
+    schedule(vocalPart, warp);
+  }
+
+  function attachRollHandlers(){
+    const svg = $("#adminRoll");
+    let dragKnot = null;
+    svg.addEventListener("pointerdown", e => {
+      const handle = e.target.closest(".knothandle");
+      if (handle){ dragKnot = +handle.dataset.knot; svg.setPointerCapture(e.pointerId); return; }
+      const q = (e.clientX - svg.getBoundingClientRect().left) / ROLL_SCALE;
+      playPreviewAt(Math.max(0, q));
+    });
+    svg.addEventListener("pointermove", e => {
+      if (dragKnot === null) return;
+      const q = Math.max(0, (e.clientX - svg.getBoundingClientRect().left) / ROLL_SCALE);
+      working.vocalAlignment.knots[dragKnot][1] = Math.round(q * 2) / 2;
+      renderRoll();
+    });
+    svg.addEventListener("pointerup", () => {
+      if (dragKnot !== null){
+        playPreviewAt(working.vocalAlignment.knots[dragKnot][1]);
+        renderKnots();
+      }
+      dragKnot = null;
+    });
+  }
+
+  function renderSections(){
+    $("#adminSections").innerHTML = working.sections.map((s, i) => `
+      <div class="adminrow">
+        <span class="adminrowlabel">${s.label}</span>
+        <select data-sec-line="${i}">
+          ${working.lines.map(l => `<option value="${l.id}" ${l.id===s.lineAnchor?"selected":""}>${(l.text||"(empty)").slice(0,40)}</option>`).join("")}
+        </select>
+        <input type="number" data-sec-bpm="${i}" value="${s.bpm}" min="20" max="300" style="width:60px">
+        <span class="adminhint">BPM${s.bpmIsOverride ? " (overridden)" : ""}</span>
+      </div>`).join("");
+  }
+
+  const attrEscape = s => (s || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;");
+
+  function renderLines(){
+    $("#adminLines").innerHTML = working.lines.map((l, i) => {
+      const words = (l.text || "").split(" ");
+      const wordSpans = words.map((w, wi) =>
+        `<span class="adminword" data-split-line="${i}" data-split-word="${wi}">${w}</span>`).join(" ");
+      return `<div class="adminrow adminline">
+        <label class="adminconfirm"><input type="checkbox" data-line-confirmed="${i}" ${l.confirmed?"checked":""}> confirmed</label>
+        <input type="text" class="adminlinetextedit" data-line-text="${i}" value="${attrEscape(l.text)}" placeholder="Retype the correct lyric here" aria-label="Line ${i+1} text">
+        <div class="adminlinetext">${wordSpans}<span class="adminhint">tap a word to split the line there</span></div>
+        ${i < working.lines.length - 1 ? `<button class="mini" data-merge-line="${i}">Merge ↓</button>` : ""}
+      </div>`;
+    }).join("");
+  }
+
+  function renderKnots(){
+    $("#adminKnots").innerHTML = working.vocalAlignment.knots.map((k, i) => `
+      <div class="adminrow">
+        <input type="number" data-knot-v="${i}" value="${k[0]}" step="0.5" style="width:80px"> →
+        <input type="number" data-knot-s="${i}" value="${k[1]}" step="0.5" style="width:80px">
+        <button class="mini" data-remove-knot="${i}">Remove</button>
+      </div>`).join("");
+  }
+
+  $("#adminRollPart").innerHTML = working.parts.filter(p => p.id !== "piano")
+    .map(p => `<option value="${p.id}" ${p.id===currentVocalId?"selected":""}>${p.label}</option>`).join("");
+
+  function renderAll(){ renderSections(); renderLines(); renderKnots(); renderRoll(); }
+  renderAll();
+  attachRollHandlers();
+
+  $("#adminPanel").addEventListener("input", e => {
+    const t = e.target;
+    if (t.dataset.secLine !== undefined) working.sections[+t.dataset.secLine].lineAnchor = +t.value;
+    if (t.dataset.secBpm !== undefined){
+      working.sections[+t.dataset.secBpm].bpm = +t.value;
+      working.sections[+t.dataset.secBpm].bpmIsOverride = true;
+    }
+    if (t.dataset.lineConfirmed !== undefined) working.lines[+t.dataset.lineConfirmed].confirmed = t.checked;
+    if (t.dataset.lineText !== undefined) working.lines[+t.dataset.lineText].text = t.value;
+    if (t.dataset.knotV !== undefined){ working.vocalAlignment.knots[+t.dataset.knotV][0] = +t.value; renderRoll(); }
+    if (t.dataset.knotS !== undefined){ working.vocalAlignment.knots[+t.dataset.knotS][1] = +t.value; renderRoll(); }
+    if (t.dataset.rollPart !== undefined){ currentVocalId = t.value; renderRoll(); }
+  });
+
+  $("#adminPanel").addEventListener("click", e => {
+    const t = e.target;
+    if (t.dataset.splitLine !== undefined){
+      const li = +t.dataset.splitLine, wi = +t.dataset.splitWord;
+      const line = working.lines[li];
+      const words = (line.text || "").split(" ");
+      if (wi === 0) return; // splitting before the first word does nothing
+      const lyricSplit = line.lyricStart + wi; // approx: assumes ~1 word per lyric syllable boundary
+      const first = {...line, text: words.slice(0, wi).join(" "), lyricEnd: Math.min(lyricSplit - 1, line.lyricEnd)};
+      const second = {...line, id: working.lines.length, text: words.slice(wi).join(" "),
+                       lyricStart: Math.min(lyricSplit, line.lyricEnd), quarter: line.quarter, confirmed: false};
+      working.lines.splice(li, 1, first, second);
+      working.lines.forEach((l, idx) => l.id = idx);
+      renderAll();
+    }
+    if (t.dataset.mergeLine !== undefined){
+      const li = +t.dataset.mergeLine;
+      const a = working.lines[li], b = working.lines[li + 1];
+      const merged = {...a, text: (a.text + " " + b.text).trim(), lyricEnd: b.lyricEnd, confirmed: false};
+      working.lines.splice(li, 2, merged);
+      working.lines.forEach((l, idx) => l.id = idx);
+      renderAll();
+    }
+    if (t.dataset.removeKnot !== undefined){
+      working.vocalAlignment.knots.splice(+t.dataset.removeKnot, 1);
+      renderKnots(); renderRoll();
+    }
+    if (t.id === "adminAddKnot"){
+      working.vocalAlignment.knots.push([0, 0]);
+      renderKnots(); renderRoll();
+    }
+    if (t.id === "adminStopPreview") stopPreview();
+    if (t.id === "adminSaveBtn") saveScore(working);
+  });
+}
+
+/* ================= tempo map: quarters <-> seconds ================= */
+function makeTempoMap(sections, totalQuarters){
+  // sections are sorted by their shared-timeline bar/quarter start, each with a live bpm.
+  return {
+    secondsAt(quarter){
+      // walk sections in order, accumulating seconds per segment at that
+      // segment's own bpm, until we reach the segment containing `quarter`
+      let sec = 0;
+      for (let i = 0; i < sections.length; i++){
+        const s = sections[i];
+        const segStart = s.startQuarter;
+        const segEnd = (i + 1 < sections.length) ? sections[i + 1].startQuarter : Infinity;
+        if (quarter <= segStart) break;
+        const qInSeg = Math.min(quarter, segEnd) - segStart;
+        sec += qInSeg * 60 / s.bpm;
+        if (quarter <= segEnd) break;
+      }
+      return sec;
+    },
+    quarterAt(seconds){
+      // invert by walking the same segments
+      let acc = 0;
+      for (let i = 0; i < sections.length; i++){
+        const s = sections[i];
+        const segStart = s.startQuarter;
+        const segEnd = (i + 1 < sections.length) ? sections[i + 1].startQuarter : Infinity;
+        const segQuarters = segEnd - segStart;
+        const segSeconds = segQuarters === Infinity ? Infinity : segQuarters * 60 / s.bpm;
+        if (seconds <= acc + segSeconds || segSeconds === Infinity){
+          return segStart + (seconds - acc) * s.bpm / 60;
+        }
+        acc += segSeconds;
+      }
+      return totalQuarters;
+    },
+  };
+}
+
+function warpFactory(knots){
+  // piecewise-linear, knots = [[vocalQ, sharedQ], ...] sorted by vocalQ
+  return function warp(vocalQuarter){
+    if (vocalQuarter <= knots[0][0]) return knots[0][1];
+    for (let i = 0; i < knots.length - 1; i++){
+      const [v0, s0] = knots[i], [v1, s1] = knots[i + 1];
+      if (vocalQuarter <= v1){
+        const t = (vocalQuarter - v0) / (v1 - v0 || 1);
+        return s0 + t * (s1 - s0);
+      }
+    }
+    const [vN, sN] = knots[knots.length - 1];
+    return sN + (vocalQuarter - vN);
+  };
+}
+
+/* ================= app ================= */
+function initApp(SCORE, ctx, synth){
+  const PARTS = SCORE.parts;
+  const warp = warpFactory(SCORE.vocalAlignment.knots);
+  let nodes = {};
+  let myPart = PARTS.find(p => p.id !== "piano")?.id || PARTS[0].id;
+  let activePreset = "full", loopOn = false, clickOn = true;
+  const state = {};
+  PARTS.forEach(p => state[p.id] = {vol: 0.85, pan: p.pan, mute: false, solo: false});
+
+  // sections carry a "startQuarter" on the SHARED (piano) timeline, derived
+  // from their lineAnchor's lyric quarter (vocal timeline) warped across.
+  const sections = SCORE.sections.map(s => {
+    const line = SCORE.lines.find(l => l.id === s.lineAnchor);
+    const startQuarter = line ? warp(line.quarter) : (SCORE.measures[s.bar] ? SCORE.measures[s.bar].quarter : 0);
+    return {...s, startQuarter};
+  }).sort((a, b) => a.startQuarter - b.startQuarter);
+
+  const totalQuarters = Math.max(
+    SCORE.measures[SCORE.measures.length - 1].quarter,
+    ...PARTS.map(p => {
+      const last = p.notes[p.notes.length - 1];
+      const q = p.id === "piano" ? last.quarter : warp(last.quarter);
+      return q + (last.duration || 0);
+    })
+  );
+
+  let tempoMap = makeTempoMap(sections, totalQuarters);
+  const bars = SCORE.measures.map(m => m.quarter).map(q => tempoMap.secondsAt(q));
+  let DUR = tempoMap.secondsAt(totalQuarters);
+
+  const beatsPerBar = SCORE.measures[0].beats || 4;
+
+  const PRESETS = [
+    {id:"full",  label:"Full mix",      hint:"Everything, evenly balanced"},
+    {id:"loud",  label:"Mine louder",   hint:"Your line on top, others underneath"},
+    {id:"only",  label:"Mine only",     hint:"Your line alone with the piano"},
+    {id:"drop",  label:"Drop mine",     hint:"Everyone but you — sing your own line"},
+    {id:"wide",  label:"Spread out",    hint:"Parts pushed apart across the stereo field"},
+  ];
+
+  let currentSectionId = sections[0].id;
+  const sectionAt = quarter => {
+    let s = sections[0];
+    for (const sec of sections) if (sec.startQuarter <= quarter) s = sec; else break;
+    return s;
+  };
+  const section = id => sections.find(s => s.id === id);
+
+  $("#songTitle").textContent = SCORE.title;
+  $("#showName").textContent = SCORE.show;
+
+  function buildMixer(){
+    $("#mixer").innerHTML = PARTS.map(p => `
+      <div class="ch" id="ch-${p.id}" style="--hue:${p.hue}">
+        <div class="chead">
+          <div class="badge">${p.id[0].toUpperCase()}</div>
+          <div><div class="cname">${p.label}</div><div class="cwho" id="who-${p.id}">${p.who}</div></div>
+          <div class="btns">
+            <button class="tog" data-solo="${p.id}" aria-pressed="false" title="Solo ${p.label}">S</button>
+            <button class="tog" data-mute="${p.id}" aria-pressed="false" title="Mute ${p.label}">M</button>
+          </div>
+        </div>
+        <div class="faderow">
+          <input type="range" data-vol="${p.id}" min="0" max="100" value="85" aria-label="${p.label} volume">
+          <div class="val" id="v-${p.id}">85</div>
+        </div>
+        <div class="panrow">
+          <div class="panlab">Pan</div>
+          <input type="range" data-pan="${p.id}" min="-100" max="100" value="${p.pan*100}" aria-label="${p.label} pan">
+          <div class="val" id="p-${p.id}">${panLabel(p.pan)}</div>
+        </div>
+      </div>`).join("");
+
+    $("#myPart").innerHTML = PARTS.filter(p => p.id !== "piano").map(p => `
+      <button class="pick" data-my="${p.id}" aria-pressed="${p.id===myPart}" style="color:${p.hue}">
+        <b>${p.id[0].toUpperCase()}</b><span>${p.id[0].toUpperCase()+p.id.slice(1)}</span>
+      </button>`).join("") + `<button class="pick" data-my="none" aria-pressed="false"><b>·</b><span>None</span></button>`;
+
+    $("#presets").innerHTML = PRESETS.map(p =>
+      `<button class="chip" data-preset="${p.id}" aria-pressed="${p.id===activePreset}" title="${p.hint}">${p.label}</button>`).join("");
+
+    $("#beats").innerHTML = Array.from({length: beatsPerBar}, (_,i) =>
+      `<div class="beat${i===0?" one":""}" data-beat="${i}"></div>`).join("");
+    $("#barTot").textContent = bars.length;
+
+    $("#sections").innerHTML = sections.map(s => `
+      <button class="chip" data-section="${s.id}" aria-pressed="${s.id===currentSectionId}">
+        ${s.label}<span class="pct" id="bpm-${s.id}">${Math.round(s.bpm)}</span>
+      </button>`).join("");
+
+    $("#lineList").innerHTML = SCORE.lines.map(l => `
+      <button class="lineitem" data-line="${l.id}">${l.text || "(empty)"}</button>`).join("");
+    $("#lineCount").textContent = `${SCORE.lines.length} lines`;
+  }
+
+  function renderTempo(){
+    const sec = section(currentSectionId);
+    const t = $("#tempo");
+    if (document.activeElement !== t) t.value = Math.round(sec.bpm);
+    $("#tempoVal").textContent = Math.round(sec.bpm);
+    $("#tempoLive").textContent = Math.round(sec.bpm) + " BPM · " + sec.label;
+    document.querySelectorAll("[data-section]").forEach(b => {
+      b.setAttribute("aria-pressed", b.dataset.section === currentSectionId);
+      const el = document.getElementById("bpm-" + b.dataset.section);
+      if (el) el.textContent = Math.round(section(b.dataset.section).bpm);
+    });
+  }
+
+  function rebuildTempoMap(){
+    tempoMap = makeTempoMap(sections, totalQuarters);
+    bars.length = 0;
+    SCORE.measures.forEach(m => bars.push(tempoMap.secondsAt(m.quarter)));
+    DUR = tempoMap.secondsAt(totalQuarters);
+    $("#tTot").textContent = fmt(DUR);
+  }
+
+  function setBpm(bpm, sec){
+    sec.bpm = bpm; sec.bpmIsOverride = true;
+    rebuildTempoMap();
+    if (playing) scheduler.reschedule(position());
+    renderTempo();
+  }
+
+  const panLabel = v => Math.abs(v) < 0.03 ? "C" : (v < 0 ? "L" : "R") + Math.round(Math.abs(v)*100);
+
+  function audibleGain(id){
+    const anySolo = PARTS.some(p => state[p.id].solo);
+    const s = state[id];
+    if (s.mute) return 0;
+    if (anySolo && !s.solo) return 0;
+    return s.vol;
+  }
+
+  function ensureNode(p){
+    if (nodes[p.id]) return nodes[p.id];
+    const gain = ctx.createGain(), pan = ctx.createStereoPanner();
+    gain.connect(pan); pan.connect(ctx.destination);
+    synth.connectChannel(gain, p.midiChannel);
+    if (synth.programChange) synth.programChange(p.midiChannel, p.midiProgram);
+    nodes[p.id] = {gain, pan};
+    return nodes[p.id];
+  }
+  PARTS.forEach(ensureNode);
+
+  function applyMix(){
+    PARTS.forEach(p => {
+      const s = state[p.id], g = audibleGain(p.id), n = nodes[p.id];
+      n.gain.gain.setTargetAtTime(g, ctx.currentTime, 0.02);
+      n.pan.pan.setTargetAtTime(s.pan, ctx.currentTime, 0.02);
+      document.getElementById("ch-"+p.id)?.classList.toggle("off", g === 0);
+      const v = document.getElementById("v-"+p.id); if (v) v.textContent = Math.round(s.vol*100);
+      const pv = document.getElementById("p-"+p.id); if (pv) pv.textContent = panLabel(s.pan);
+      const vs = document.querySelector(`[data-vol="${p.id}"]`);
+      if (vs && +vs.value !== Math.round(s.vol*100)) vs.value = Math.round(s.vol*100);
+      const ps = document.querySelector(`[data-pan="${p.id}"]`);
+      if (ps && +ps.value !== Math.round(s.pan*100)) ps.value = Math.round(s.pan*100);
+      document.querySelector(`[data-solo="${p.id}"]`)?.setAttribute("aria-pressed", s.solo);
+      document.querySelector(`[data-mute="${p.id}"]`)?.setAttribute("aria-pressed", s.mute);
+    });
+  }
+
+  /* ---------- live lookahead scheduler ---------- */
+  let playing = false, startCtxTime = 0, startPos = 0, raf = 0;
+  const LOOKAHEAD = 0.15; // seconds
+
+  // Precompute each part's notes on the SHARED timeline (quarter, dur-seconds-independent;
+  // actual seconds are computed at schedule time from the live tempo map).
+  const partNotes = {};
+  PARTS.forEach(p => {
+    partNotes[p.id] = p.notes.map(n => ({
+      quarter: p.id === "piano" ? n.quarter : warp(n.quarter),
+      endQuarter: p.id === "piano" ? n.quarter + n.duration : warp(n.quarter + n.duration),
+      pitch: n.pitch, velocity: n.velocity,
+    })).sort((a,b) => a.quarter - b.quarter);
+  });
+
+  const scheduler = {
+    cursor: {}, // part id -> next note index to consider
+    reset(fromQuarter){
+      PARTS.forEach(p => {
+        const notes = partNotes[p.id];
+        let i = 0; while (i < notes.length && notes[i].quarter < fromQuarter) i++;
+        this.cursor[p.id] = i;
+      });
+    },
+    reschedule(fromSeconds){
+      this.reset(tempoMap.quarterAt(fromSeconds));
+    },
+    tick(){
+      if (!playing) return;
+      const nowSec = position();
+      const aheadSec = nowSec + LOOKAHEAD;
+      PARTS.forEach(p => {
+        const notes = partNotes[p.id];
+        let i = this.cursor[p.id];
+        while (i < notes.length){
+          const n = notes[i];
+          const onSec = tempoMap.secondsAt(n.quarter);
+          if (onSec > aheadSec) break;
+          const offSec = tempoMap.secondsAt(n.endQuarter);
+          const when = Math.max(0, onSec - nowSec);
+          const dur = Math.max(0.02, offSec - onSec);
+          if (synth.noteOn) synth.noteOn(p.midiChannel, n.pitch, n.velocity);
+          if (synth.noteOff) setTimeout(() => synth.noteOff(p.midiChannel, n.pitch), Math.max(0, dur*1000));
+          i++;
+        }
+        this.cursor[p.id] = i;
+      });
+    },
+  };
+
+  function position(){ return playing ? startPos + (ctx.currentTime - startCtxTime) : startPos; }
+
+  function seekTo(atSeconds){
+    startPos = atSeconds; startCtxTime = ctx.currentTime;
+    scheduler.reschedule(atSeconds);
+    if (playing && !loopRunning) loopFrame();
+  }
+
+  let countInTimers = [];
+  function clearCountIn(){ countInTimers.forEach(clearTimeout); countInTimers = []; }
+  function tick(strong){
+    if (!clickOn) return;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = strong ? 1600 : 1100;
+    g.gain.setValueAtTime(strong ? 0.16 : 0.09, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0005, ctx.currentTime + 0.06);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.07);
+  }
+
+  async function play(){
+    if (ctx.state === "suspended") await ctx.resume();
+    const at = position();
+    if (clickOn){
+      const sec = section(sectionAt(tempoMap.quarterAt(at)).id);
+      const spb = 60 / sec.bpm;
+      for (let i=0;i<beatsPerBar;i++)
+        countInTimers.push(setTimeout(() => { tick(i===0); showBeat(i); }, i*spb*1000));
+      countInTimers.push(setTimeout(() => reallyStart(at), beatsPerBar*spb*1000));
+    } else reallyStart(at);
+    playing = true; setPlayIcon(true);
+  }
+  function reallyStart(at){ if (playing) seekTo(at); }
+
+  function pause(){
+    const p = position();
+    clearCountIn(); playing = false; loopRunning = false;
+    startPos = Math.min(p, DUR);
+    cancelAnimationFrame(raf); setPlayIcon(false); render();
+  }
+
+  const barLen = i => (i+1 < bars.length ? bars[i+1] : DUR) - bars[i];
+  function setPlayIcon(on){
+    $("#playIcon").innerHTML = on ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+    $("#play").setAttribute("aria-label", on ? "Pause" : "Play");
+  }
+
+  let lastBeat = -1, loopRunning = false, loopA = 0, loopB = bars.length - 1;
+  function loopFrame(){
+    loopRunning = true;
+    const pos = position();
+    if (loopOn && pos >= bars[loopB]) seekTo(bars[loopA]);
+    else if (pos >= DUR) { pause(); startPos = 0; render(); return; }
+    scheduler.tick();
+    render();
+    const bi = barIndex(pos);
+    const b = Math.floor((pos - bars[bi]) / (barLen(bi)/beatsPerBar));
+    const key = bi*100+b;
+    if (key !== lastBeat){ lastBeat = key; if (clickOn && playing) tick(b===0); }
+    raf = requestAnimationFrame(loopFrame);
+  }
+  function barIndex(pos){ let i=0; while (i+1<bars.length && bars[i+1]<=pos) i++; return i; }
+
+  function render(){
+    const pos = Math.min(position(), DUR);
+    const bi = barIndex(pos);
+    $("#barNum").textContent = bi + 1;
+    const within = (pos - bars[bi]) / (barLen(bi)/beatsPerBar);
+    const beat = Math.max(0, Math.min(beatsPerBar-1, Math.floor(within)));
+    showBeat(playing ? beat : -1);
+    $("#tCur").textContent = fmt(pos);
+    const sc = $("#scrub");
+    if (document.activeElement !== sc) sc.value = Math.round(pos/DUR*1000);
+    renderLyrics(pos);
+    const quarter = tempoMap.quarterAt(pos);
+    const here = sectionAt(quarter).id;
+    if (here !== currentSectionId){ currentSectionId = here; renderTempo(); }
+  }
+  const fmt = s => Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0");
+  function showBeat(i){ document.querySelectorAll(".beat").forEach((el,idx)=>el.classList.toggle("on", idx===i)); }
+
+  function renderLyrics(pos){
+    const quarter = tempoMap.quarterAt(pos);
+    let idx = -1;
+    for (let i=0;i<SCORE.lyrics.length;i++) if (warp(SCORE.lyrics[i].quarter) <= quarter + 0.05) idx = i;
+    $("#lyrNow").textContent = idx >= 0 ? SCORE.lyrics[idx].text : "—";
+    document.querySelectorAll(".lineitem").forEach(el => {
+      const lid = +el.dataset.line;
+      el.classList.toggle("current", idx >= 0 && SCORE.lyrics[idx].lineId === lid);
+    });
+  }
+
+  function jumpToLine(lineId){
+    const line = SCORE.lines.find(l => l.id === lineId);
+    if (!line) return;
+    const sharedQ = warp(line.quarter);
+    const at = tempoMap.secondsAt(sharedQ);
+    if (playing) seekTo(at); else { startPos = at; render(); }
+  }
+
+  function jumpToSection(id){
+    currentSectionId = id;
+    const at = tempoMap.secondsAt(section(id).startQuarter);
+    if (playing) seekTo(at); else { startPos = at; render(); }
+    renderTempo();
+  }
+
+  function applyPreset(id){
+    activePreset = id;
+    const mine = myPart;
+    PARTS.forEach(p => {
+      const s = state[p.id], isMine = p.id === mine, isPiano = p.id === "piano";
+      s.mute = false; s.solo = false; s.pan = p.pan;
+      if (id === "full")      s.vol = 0.85;
+      else if (id === "loud") s.vol = isMine ? 1 : (isPiano ? 0.5 : 0.28);
+      else if (id === "only") s.vol = isMine ? 1 : (isPiano ? 0.35 : 0);
+      else if (id === "drop") s.vol = isMine ? 0 : 0.9;
+      else if (id === "wide"){ s.vol = 0.85; s.pan = isPiano ? 0 : p.pan * 1.7; }
+      s.pan = Math.max(-1, Math.min(1, s.pan));
+    });
+    document.querySelectorAll("[data-preset]").forEach(b => b.setAttribute("aria-pressed", b.dataset.preset === id));
+    applyMix(); markMine();
+  }
+  function markMine(){
+    PARTS.forEach(p => {
+      document.getElementById("ch-"+p.id)?.classList.toggle("mine", p.id === myPart);
+      const who = document.getElementById("who-"+p.id);
+      if (who) who.textContent = p.id === myPart ? "Your line" : p.who;
+    });
+    document.querySelectorAll("[data-my]").forEach(b => b.setAttribute("aria-pressed", b.dataset.my === myPart));
+  }
+  function clearPreset(){
+    activePreset = null;
+    document.querySelectorAll("[data-preset]").forEach(b => b.setAttribute("aria-pressed", false));
+  }
+
+  function wire(){
+    document.addEventListener("input", e => {
+      const t = e.target;
+      if (t.dataset.vol){ state[t.dataset.vol].vol = t.value/100; clearPreset(); applyMix(); }
+      if (t.dataset.pan){ state[t.dataset.pan].pan = t.value/100; clearPreset(); applyMix(); }
+      if (t.id === "scrub"){
+        const at = t.value/1000*DUR;
+        if (playing) seekTo(at); else { startPos = at; render(); }
+      }
+      if (t.id === "tempo") setBpm(+t.value, section(currentSectionId));
+    });
+    document.addEventListener("click", async e => {
+      const t = e.target.closest("button"); if (!t) return;
+      if (t.dataset.solo){ const s=state[t.dataset.solo]; s.solo=!s.solo; clearPreset(); applyMix(); }
+      if (t.dataset.mute){ const s=state[t.dataset.mute]; s.mute=!s.mute; clearPreset(); applyMix(); }
+      if (t.dataset.my){ myPart = t.dataset.my; markMine(); if (activePreset) applyPreset(activePreset); }
+      if (t.dataset.preset) applyPreset(t.dataset.preset);
+      if (t.dataset.section) jumpToSection(t.dataset.section);
+      if (t.dataset.line) jumpToLine(+t.dataset.line);
+      if (t.id === "play") playing ? pause() : play();
+      if (t.id === "loopBtn"){
+        loopOn = !loopOn; t.setAttribute("aria-pressed", loopOn);
+        $("#loopLbl").textContent = loopOn ? `Bars ${loopA+1}–${loopB+1}` : "Loop";
+        $("#loopInfo").textContent = loopOn ? ` · looping ${loopA+1}–${loopB+1}` : "";
+        if (loopOn && playing) seekTo(bars[loopA]);
+      }
+      if (t.id === "clickBtn"){ clickOn = !clickOn; t.setAttribute("aria-pressed", clickOn); }
+      if (t.id === "panBtn"){
+        const on = t.getAttribute("aria-pressed") !== "true";
+        t.setAttribute("aria-pressed", on);
+        $("#mixer").classList.toggle("showpan", on);
+      }
+    });
+  }
+
+  buildMixer(); wire(); applyPreset("full"); markMine(); renderTempo();
+  scheduler.reset(0);
+  $("#tTot").textContent = fmt(DUR);
+  render();
+
+  // exposed for tests
+  window.__app = { position, play, pause, jumpToLine, jumpToSection, setBpm, section, sections, DUR: () => DUR };
+}
+
+$("#retryBtn").addEventListener("click", loadEverything);
+loadEverything();
+</script>
