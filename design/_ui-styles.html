@@ -95,6 +95,17 @@ h2{font:500 11px/1 "IBM Plex Sans",sans-serif; letter-spacing:.13em; text-transf
 .adminword:hover{background:color-mix(in srgb, var(--accent) 20%, transparent)}
 .adminconfirm{font-size:11px; color:var(--muted); display:flex; align-items:center; gap:4px; white-space:nowrap}
 .adminsave{width:100%; border-radius:10px; height:44px; margin-top:16px; font:500 14px/1 inherit}
+.rollpart{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11px; margin:6px 0 4px; color:var(--muted)}
+.rollwrap{overflow-x:auto; overflow-y:hidden; border:1px solid var(--line); border-radius:8px; background:var(--surface); -webkit-overflow-scrolling:touch}
+#adminRoll{display:block; touch-action:none}
+.rollnote{rx:1.5}
+.rollpiano{fill:var(--p-k)}
+.rollvocal{fill:var(--accent)}
+.barline{stroke:var(--line); stroke-width:1}
+.barnum{font-size:8px; fill:var(--muted)}
+.rolllabel{font-size:9px; fill:var(--muted); text-transform:uppercase; letter-spacing:.06em}
+.knotline{stroke:var(--p-b); stroke-width:1.5; stroke-dasharray:3 2; opacity:.7}
+.knothandle{fill:var(--p-b); cursor:ew-resize}
 select, input[type=number]{font:400 12px/1 "IBM Plex Sans",sans-serif; padding:5px 7px;
   border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--text)}
 

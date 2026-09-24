@@ -95,6 +95,17 @@ h2{font:500 11px/1 "IBM Plex Sans",sans-serif; letter-spacing:.13em; text-transf
 .adminword:hover{background:color-mix(in srgb, var(--accent) 20%, transparent)}
 .adminconfirm{font-size:11px; color:var(--muted); display:flex; align-items:center; gap:4px; white-space:nowrap}
 .adminsave{width:100%; border-radius:10px; height:44px; margin-top:16px; font:500 14px/1 inherit}
+.rollpart{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11px; margin:6px 0 4px; color:var(--muted)}
+.rollwrap{overflow-x:auto; overflow-y:hidden; border:1px solid var(--line); border-radius:8px; background:var(--surface); -webkit-overflow-scrolling:touch}
+#adminRoll{display:block; touch-action:none}
+.rollnote{rx:1.5}
+.rollpiano{fill:var(--p-k)}
+.rollvocal{fill:var(--accent)}
+.barline{stroke:var(--line); stroke-width:1}
+.barnum{font-size:8px; fill:var(--muted)}
+.rolllabel{font-size:9px; fill:var(--muted); text-transform:uppercase; letter-spacing:.06em}
+.knotline{stroke:var(--p-b); stroke-width:1.5; stroke-dasharray:3 2; opacity:.7}
+.knothandle{fill:var(--p-b); cursor:ew-resize}
 select, input[type=number]{font:400 12px/1 "IBM Plex Sans",sans-serif; padding:5px 7px;
   border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--text)}
 
@@ -272,7 +283,12 @@ input[type=range]:focus-visible{outline:2px solid var(--accent); outline-offset:
       </div>
 
       <div class="adminsub">
-        <h3>Vocal ↔ piano alignment <span class="adminhint">vocal-quarter → shared-quarter</span></h3>
+        <h3>Vocal ↔ piano alignment <span class="adminhint">drag a marker to slide the vocal there; tap the roll to preview</span></h3>
+        <div class="rollpart">
+          <label>Vocal part: <select data-roll-part id="adminRollPart"></select></label>
+          <button class="mini" id="adminStopPreview">Stop preview</button>
+        </div>
+        <div class="rollwrap"><svg id="adminRoll"></svg></div>
         <div id="adminKnots"></div>
         <button class="mini" id="adminAddKnot">+ Add point</button>
       </div>
@@ -452,7 +468,7 @@ async function loadEverything(){
     $("#mainBody").hidden = false;
     $("#transport").hidden = false;
 
-    if (isAdminRequested()) await gateAdmin(SCORE);
+    if (isAdminRequested()) await gateAdmin(SCORE, ctx, synth);
   } catch (err) {
     title.textContent = "Couldn't load from Drive";
     msg.textContent = driveErrText(err);
@@ -467,7 +483,7 @@ function isAdminRequested(){
 
 let adminToken = null;
 
-function gateAdmin(SCORE){
+function gateAdmin(SCORE, ctx, synth){
   return new Promise(resolve => {
     const gate = $("#adminGate"), authMsg = $("#adminAuthMsg"), btn = $("#adminSignInBtn");
     gate.hidden = false;
@@ -489,7 +505,7 @@ function gateAdmin(SCORE){
           if (resp.error){ authMsg.textContent = "Sign-in failed: " + resp.error; return; }
           adminToken = resp.access_token;
           gate.hidden = true;
-          initAdminPanel(SCORE);
+          initAdminPanel(SCORE, ctx, synth);
           resolve();
         },
       });
@@ -517,9 +533,132 @@ async function saveScore(score){
   }
 }
 
-function initAdminPanel(SCORE){
+function initAdminPanel(SCORE, ctx, synth){
   const working = JSON.parse(JSON.stringify(SCORE)); // local working copy; only "Save to Drive" persists it
   $("#adminPanel").hidden = false;
+
+  /* ---- visual piano-roll: see bars/notes for piano vs. the selected vocal
+     part, drag alignment markers, tap to hear the result immediately.
+     Reuses the synth channels initApp() already wired up (ensureNode/
+     connectChannel/programChange ran once at load) -- preview just fires
+     noteOn/noteOff on those same channels, no separate audio graph needed. ---- */
+  const ROLL_SCALE = 14; // px per quarter note
+  const LANE_H = 56, LANE_GAP = 8;
+  const rollPiano = working.parts.find(p => p.id === "piano");
+  let currentVocalId = working.parts.find(p => p.id !== "piano").id;
+
+  function laneRange(notes){
+    const pitches = notes.map(n => n.pitch);
+    return { min: Math.min(...pitches), max: Math.max(...pitches) };
+  }
+  function laneY(pitch, range, top){
+    const span = Math.max(1, range.max - range.min);
+    return top + ((range.max - pitch) / span) * (LANE_H - 6) + 3;
+  }
+  // Wide enough for the last bar AND the furthest knot -- a knot can be
+  // dragged past the last bar while correcting, and an SVG clips (silently,
+  // un-clickably) anything outside its declared width.
+  function rollExtentQ(){
+    return Math.max(
+      working.measures[working.measures.length - 1].quarter,
+      ...working.vocalAlignment.knots.map(k => k[1])
+    ) + 8;
+  }
+
+  function renderRoll(){
+    const svg = $("#adminRoll");
+    const warp = warpFactory(working.vocalAlignment.knots);
+    const vocalPart = working.parts.find(p => p.id === currentVocalId);
+    const pianoRange = laneRange(rollPiano.notes);
+    const vocalRange = laneRange(vocalPart.notes);
+    const vocalTop = LANE_H + LANE_GAP;
+    const totalH = LANE_H * 2 + LANE_GAP;
+    const totalQ = rollExtentQ();
+    const width = totalQ * ROLL_SCALE;
+
+    const bars = working.measures.map((m, i) => {
+      const x = m.quarter * ROLL_SCALE;
+      const num = i % 4 === 0 ? `<text class="barnum" x="${x+2}" y="9">${i+1}</text>` : "";
+      return `<line class="barline" x1="${x}" x2="${x}" y1="0" y2="${totalH}"/>${num}`;
+    }).join("");
+
+    const pianoNotes = rollPiano.notes.map(n =>
+      `<rect class="rollnote rollpiano" x="${n.quarter*ROLL_SCALE}" y="${laneY(n.pitch,pianoRange,0)}" width="${Math.max(2,n.duration*ROLL_SCALE-1)}" height="4"/>`).join("");
+    const vocalNotes = vocalPart.notes.map(n =>
+      `<rect class="rollnote rollvocal" x="${warp(n.quarter)*ROLL_SCALE}" y="${laneY(n.pitch,vocalRange,vocalTop)}" width="${Math.max(2,n.duration*ROLL_SCALE-1)}" height="4"/>`).join("");
+
+    const knots = working.vocalAlignment.knots.map((k, i) => {
+      const x = k[1] * ROLL_SCALE;
+      return `<line class="knotline" x1="${x}" x2="${x}" y1="0" y2="${totalH}"/>` +
+             `<circle class="knothandle" data-knot="${i}" cx="${x}" cy="${totalH+8}" r="7"/>`;
+    }).join("");
+
+    svg.setAttribute("width", width);
+    svg.setAttribute("height", totalH + 18);
+    svg.innerHTML = bars + pianoNotes + vocalNotes + knots +
+      `<text class="rolllabel" x="4" y="10">Piano</text><text class="rolllabel" x="4" y="${vocalTop+10}">${vocalPart.label}</text>`;
+  }
+
+  let previewTimers = [], previewActiveNotes = [];
+  function stopPreview(){
+    previewTimers.forEach(clearTimeout);
+    previewTimers = [];
+    previewActiveNotes.forEach(({channel, pitch}) => synth.noteOff && synth.noteOff(channel, pitch));
+    previewActiveNotes = [];
+  }
+  function playPreviewAt(sharedQuarterCenter){
+    stopPreview();
+    const warp = warpFactory(working.vocalAlignment.knots);
+    const sections = working.sections.map(s => {
+      const line = working.lines.find(l => l.id === s.lineAnchor);
+      return {...s, startQuarter: line ? warp(line.quarter) : 0};
+    }).sort((a,b) => a.startQuarter - b.startQuarter);
+    const totalQ = rollExtentQ();
+    const tempo = makeTempoMap(sections, totalQ);
+
+    const spanQ = 8; // roughly two bars either side of the tapped point
+    const fromQ = Math.max(0, sharedQuarterCenter - spanQ), toQ = sharedQuarterCenter + spanQ;
+    const fromSec = tempo.secondsAt(fromQ);
+    const vocalPart = working.parts.find(p => p.id === currentVocalId);
+
+    function schedule(part, toShared){
+      part.notes.forEach(n => {
+        const q = toShared(n.quarter);
+        if (q < fromQ || q > toQ) return;
+        const onMs = Math.max(0, (tempo.secondsAt(q) - fromSec) * 1000);
+        const offMs = Math.max(onMs + 20, (tempo.secondsAt(toShared(n.quarter + n.duration)) - fromSec) * 1000);
+        previewActiveNotes.push({channel: part.midiChannel, pitch: n.pitch});
+        previewTimers.push(setTimeout(() => synth.noteOn && synth.noteOn(part.midiChannel, n.pitch, n.velocity), onMs));
+        previewTimers.push(setTimeout(() => synth.noteOff && synth.noteOff(part.midiChannel, n.pitch), offMs));
+      });
+    }
+    schedule(rollPiano, q => q);
+    schedule(vocalPart, warp);
+  }
+
+  function attachRollHandlers(){
+    const svg = $("#adminRoll");
+    let dragKnot = null;
+    svg.addEventListener("pointerdown", e => {
+      const handle = e.target.closest(".knothandle");
+      if (handle){ dragKnot = +handle.dataset.knot; svg.setPointerCapture(e.pointerId); return; }
+      const q = (e.clientX - svg.getBoundingClientRect().left) / ROLL_SCALE;
+      playPreviewAt(Math.max(0, q));
+    });
+    svg.addEventListener("pointermove", e => {
+      if (dragKnot === null) return;
+      const q = Math.max(0, (e.clientX - svg.getBoundingClientRect().left) / ROLL_SCALE);
+      working.vocalAlignment.knots[dragKnot][1] = Math.round(q * 2) / 2;
+      renderRoll();
+    });
+    svg.addEventListener("pointerup", () => {
+      if (dragKnot !== null){
+        playPreviewAt(working.vocalAlignment.knots[dragKnot][1]);
+        renderKnots();
+      }
+      dragKnot = null;
+    });
+  }
 
   function renderSections(){
     $("#adminSections").innerHTML = working.sections.map((s, i) => `
@@ -558,8 +697,12 @@ function initAdminPanel(SCORE){
       </div>`).join("");
   }
 
-  function renderAll(){ renderSections(); renderLines(); renderKnots(); }
+  $("#adminRollPart").innerHTML = working.parts.filter(p => p.id !== "piano")
+    .map(p => `<option value="${p.id}" ${p.id===currentVocalId?"selected":""}>${p.label}</option>`).join("");
+
+  function renderAll(){ renderSections(); renderLines(); renderKnots(); renderRoll(); }
   renderAll();
+  attachRollHandlers();
 
   $("#adminPanel").addEventListener("input", e => {
     const t = e.target;
@@ -570,8 +713,9 @@ function initAdminPanel(SCORE){
     }
     if (t.dataset.lineConfirmed !== undefined) working.lines[+t.dataset.lineConfirmed].confirmed = t.checked;
     if (t.dataset.lineText !== undefined) working.lines[+t.dataset.lineText].text = t.value;
-    if (t.dataset.knotV !== undefined) working.vocalAlignment.knots[+t.dataset.knotV][0] = +t.value;
-    if (t.dataset.knotS !== undefined) working.vocalAlignment.knots[+t.dataset.knotS][1] = +t.value;
+    if (t.dataset.knotV !== undefined){ working.vocalAlignment.knots[+t.dataset.knotV][0] = +t.value; renderRoll(); }
+    if (t.dataset.knotS !== undefined){ working.vocalAlignment.knots[+t.dataset.knotS][1] = +t.value; renderRoll(); }
+    if (t.dataset.rollPart !== undefined){ currentVocalId = t.value; renderRoll(); }
   });
 
   $("#adminPanel").addEventListener("click", e => {
@@ -599,12 +743,13 @@ function initAdminPanel(SCORE){
     }
     if (t.dataset.removeKnot !== undefined){
       working.vocalAlignment.knots.splice(+t.dataset.removeKnot, 1);
-      renderKnots();
+      renderKnots(); renderRoll();
     }
     if (t.id === "adminAddKnot"){
       working.vocalAlignment.knots.push([0, 0]);
-      renderKnots();
+      renderKnots(); renderRoll();
     }
+    if (t.id === "adminStopPreview") stopPreview();
     if (t.id === "adminSaveBtn") saveScore(working);
   });
 }
