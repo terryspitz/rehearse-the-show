@@ -909,26 +909,26 @@
           "syllabic": "single"
         },
         {
-          "quarter": 41.0,
-          "seconds": 27.9546,
+          "quarter": 40.5,
+          "seconds": 27.6136,
           "text": "you're",
           "syllabic": "single"
         },
         {
-          "quarter": 41.5,
-          "seconds": 28.2955,
+          "quarter": 41.0,
+          "seconds": 27.9546,
           "text": "well",
           "syllabic": "single"
         },
         {
-          "quarter": 42.0,
-          "seconds": 28.6364,
+          "quarter": 41.25,
+          "seconds": 28.125,
           "text": "a",
           "syllabic": "begin"
         },
         {
-          "quarter": 42.5,
-          "seconds": 28.9773,
+          "quarter": 41.5,
+          "seconds": 28.2955,
           "text": "ware!",
           "syllabic": "end"
         },
@@ -1155,20 +1155,20 @@
           "syllabic": "begin"
         },
         {
-          "quarter": 84.0,
-          "seconds": 53.3916,
+          "quarter": 83.5,
+          "seconds": 53.1031,
           "text": "ed",
           "syllabic": "end"
         },
         {
-          "quarter": 85.0,
-          "seconds": 53.9685,
+          "quarter": 85.5,
+          "seconds": 54.257,
           "text": "is",
           "syllabic": "single"
         },
         {
-          "quarter": 86.0,
-          "seconds": 54.5455,
+          "quarter": 86.5,
+          "seconds": 54.8339,
           "text": "just",
           "syllabic": "single"
         },
@@ -1563,20 +1563,20 @@
           "syllabic": "middle"
         },
         {
-          "quarter": 148.0,
-          "seconds": 90.3147,
+          "quarter": 147.5,
+          "seconds": 90.0262,
           "text": "cer!",
           "syllabic": "end"
         },
         {
-          "quarter": 149.5,
-          "seconds": 91.1801,
+          "quarter": 149.0,
+          "seconds": 90.8916,
           "text": "I",
           "syllabic": "single"
         },
         {
-          "quarter": 150.5,
-          "seconds": 91.757,
+          "quarter": 150.0,
+          "seconds": 91.4685,
           "text": "mean",
           "syllabic": "single"
         },
@@ -1701,26 +1701,26 @@
           "syllabic": "single"
         },
         {
-          "quarter": 177.0,
-          "seconds": 107.0455,
+          "quarter": 178.0,
+          "seconds": 107.4867,
           "text": "What",
           "syllabic": "single"
         },
         {
-          "quarter": 178.0,
-          "seconds": 107.4867,
+          "quarter": 178.3333,
+          "seconds": 107.6337,
           "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 178.6667,
+          "seconds": 107.7808,
+          "text": "I",
           "syllabic": "single"
         },
         {
           "quarter": 179.0,
           "seconds": 107.9279,
-          "text": "I",
-          "syllabic": "single"
-        },
-        {
-          "quarter": 180.0,
-          "seconds": 108.369,
           "text": "say?",
           "syllabic": "single"
         },
@@ -1791,26 +1791,26 @@
           "syllabic": "end"
         },
         {
-          "quarter": 189.0,
-          "seconds": 112.3396,
+          "quarter": 190.0,
+          "seconds": 112.7808,
           "text": "What",
           "syllabic": "single"
         },
         {
-          "quarter": 190.0,
-          "seconds": 112.7808,
+          "quarter": 190.3333,
+          "seconds": 112.9278,
           "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 190.6667,
+          "seconds": 113.0749,
+          "text": "I",
           "syllabic": "single"
         },
         {
           "quarter": 191.0,
           "seconds": 113.2219,
-          "text": "I",
-          "syllabic": "single"
-        },
-        {
-          "quarter": 192.0,
-          "seconds": 113.6631,
           "text": "say?",
           "syllabic": "single"
         },
