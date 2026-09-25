@@ -1,0 +1,1996 @@
+{
+  "title": "We Can Do It!",
+  "composer": "Mel Brooks / Glen Kelly (The Producers)",
+  "durationSeconds": 124.928,
+  "measures": [
+    {
+      "number": 6,
+      "quarter": 0.0,
+      "seconds": 0.0,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 7,
+      "quarter": 4.0,
+      "seconds": 2.7273,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 8,
+      "quarter": 8.0,
+      "seconds": 5.4545,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 9,
+      "quarter": 12.0,
+      "seconds": 8.1818,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 10,
+      "quarter": 16.0,
+      "seconds": 10.9091,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 11,
+      "quarter": 20.0,
+      "seconds": 13.6364,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 12,
+      "quarter": 24.0,
+      "seconds": 16.3636,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 13,
+      "quarter": 28.0,
+      "seconds": 19.0909,
+      "beats": 7,
+      "beatUnit": 4
+    },
+    {
+      "number": 14,
+      "quarter": 35.0,
+      "seconds": 23.8636,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 15,
+      "quarter": 39.0,
+      "seconds": 26.5909,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 16,
+      "quarter": 43.0,
+      "seconds": 29.3182,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 17,
+      "quarter": 47.0,
+      "seconds": 32.0455,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 18,
+      "quarter": 49.0,
+      "seconds": 33.1993,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 19,
+      "quarter": 51.0,
+      "seconds": 34.3531,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 20,
+      "quarter": 53.0,
+      "seconds": 35.507,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 21,
+      "quarter": 55.0,
+      "seconds": 36.6608,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 22,
+      "quarter": 57.0,
+      "seconds": 37.8147,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 23,
+      "quarter": 59.0,
+      "seconds": 38.9685,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 24,
+      "quarter": 61.0,
+      "seconds": 40.1224,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 25,
+      "quarter": 63.0,
+      "seconds": 41.2762,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 26,
+      "quarter": 65.0,
+      "seconds": 42.4301,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 27,
+      "quarter": 67.0,
+      "seconds": 43.5839,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 28,
+      "quarter": 69.0,
+      "seconds": 44.7378,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 29,
+      "quarter": 71.0,
+      "seconds": 45.8916,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 30,
+      "quarter": 73.0,
+      "seconds": 47.0455,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 31,
+      "quarter": 75.0,
+      "seconds": 48.1993,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 32,
+      "quarter": 77.0,
+      "seconds": 49.3531,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 33,
+      "quarter": 79.0,
+      "seconds": 50.507,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 34,
+      "quarter": 81.0,
+      "seconds": 51.6608,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 35,
+      "quarter": 83.0,
+      "seconds": 52.8147,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 36,
+      "quarter": 85.0,
+      "seconds": 53.9685,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 37,
+      "quarter": 87.0,
+      "seconds": 55.1224,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 38,
+      "quarter": 89.0,
+      "seconds": 56.2762,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 39,
+      "quarter": 91.0,
+      "seconds": 57.4301,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 40,
+      "quarter": 93.0,
+      "seconds": 58.5839,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 41,
+      "quarter": 95.0,
+      "seconds": 59.7378,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 42,
+      "quarter": 97.0,
+      "seconds": 60.8916,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 43,
+      "quarter": 99.0,
+      "seconds": 62.0455,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 44,
+      "quarter": 101.0,
+      "seconds": 63.1993,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 45,
+      "quarter": 103.0,
+      "seconds": 64.3531,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 46,
+      "quarter": 105.0,
+      "seconds": 65.507,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 47,
+      "quarter": 107.0,
+      "seconds": 66.6608,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 48,
+      "quarter": 109.0,
+      "seconds": 67.8147,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 49,
+      "quarter": 111.0,
+      "seconds": 68.9685,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 50,
+      "quarter": 113.0,
+      "seconds": 70.1224,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 51,
+      "quarter": 115.0,
+      "seconds": 71.2762,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 52,
+      "quarter": 117.0,
+      "seconds": 72.4301,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 53,
+      "quarter": 119.0,
+      "seconds": 73.5839,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 54,
+      "quarter": 121.0,
+      "seconds": 74.7378,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 55,
+      "quarter": 123.0,
+      "seconds": 75.8916,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 56,
+      "quarter": 125.0,
+      "seconds": 77.0455,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 57,
+      "quarter": 127.0,
+      "seconds": 78.1993,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 58,
+      "quarter": 129.0,
+      "seconds": 79.3531,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 59,
+      "quarter": 131.0,
+      "seconds": 80.507,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 60,
+      "quarter": 133.0,
+      "seconds": 81.6608,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 61,
+      "quarter": 135.0,
+      "seconds": 82.8147,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 62,
+      "quarter": 137.0,
+      "seconds": 83.9685,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 63,
+      "quarter": 139.0,
+      "seconds": 85.1224,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 64,
+      "quarter": 141.0,
+      "seconds": 86.2762,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 65,
+      "quarter": 143.0,
+      "seconds": 87.4301,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 66,
+      "quarter": 145.0,
+      "seconds": 88.5839,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 67,
+      "quarter": 147.0,
+      "seconds": 89.7378,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 68,
+      "quarter": 149.0,
+      "seconds": 90.8916,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 69,
+      "quarter": 151.0,
+      "seconds": 92.0455,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 70,
+      "quarter": 153.0,
+      "seconds": 93.1993,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 71,
+      "quarter": 155.0,
+      "seconds": 94.3531,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 72,
+      "quarter": 157.0,
+      "seconds": 95.507,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 73,
+      "quarter": 159.0,
+      "seconds": 96.6608,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 74,
+      "quarter": 161.0,
+      "seconds": 97.8147,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 75,
+      "quarter": 163.0,
+      "seconds": 98.9685,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 76,
+      "quarter": 165.0,
+      "seconds": 100.1224,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 77,
+      "quarter": 167.0,
+      "seconds": 101.2762,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 78,
+      "quarter": 169.0,
+      "seconds": 102.4301,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 79,
+      "quarter": 171.0,
+      "seconds": 103.5839,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 80,
+      "quarter": 173.0,
+      "seconds": 104.7378,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 81,
+      "quarter": 175.0,
+      "seconds": 105.8916,
+      "beats": 2,
+      "beatUnit": 4
+    },
+    {
+      "number": 82,
+      "quarter": 177.0,
+      "seconds": 107.0455,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 83,
+      "quarter": 181.0,
+      "seconds": 108.8102,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 84,
+      "quarter": 185.0,
+      "seconds": 110.5749,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 85,
+      "quarter": 189.0,
+      "seconds": 112.3396,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 86,
+      "quarter": 193.0,
+      "seconds": 114.1043,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 87,
+      "quarter": 197.0,
+      "seconds": 115.869,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 88,
+      "quarter": 201.0,
+      "seconds": 117.6337,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 89,
+      "quarter": 205.0,
+      "seconds": 119.3984,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 90,
+      "quarter": 209.0,
+      "seconds": 121.1631,
+      "beats": 4,
+      "beatUnit": 4
+    },
+    {
+      "number": 91,
+      "quarter": 213.0,
+      "seconds": 122.9278,
+      "beats": 4,
+      "beatUnit": 4
+    }
+  ],
+  "parts": [
+    {
+      "id": "00-vocal-max-leo",
+      "name": "Vocal (Max/Leo)",
+      "group": "voice",
+      "midiProgram": 53,
+      "midiFile": "parts/00-vocal-max-leo.mid",
+      "lyrics": [
+        {
+          "quarter": 13.0,
+          "seconds": 8.8636,
+          "text": "What",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 13.25,
+          "seconds": 9.0341,
+          "text": "did",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 13.5,
+          "seconds": 9.2045,
+          "text": "Lew",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 13.75,
+          "seconds": 9.375,
+          "text": "is",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 14.0,
+          "seconds": 9.5455,
+          "text": "say",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 14.25,
+          "seconds": 9.7159,
+          "text": "to",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 14.5,
+          "seconds": 9.8864,
+          "text": "Clark",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 15.0,
+          "seconds": 10.2273,
+          "text": "when",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 16.0,
+          "seconds": 10.9091,
+          "text": "ev",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 16.25,
+          "seconds": 11.0796,
+          "text": "'ry",
+          "syllabic": "middle"
+        },
+        {
+          "quarter": 16.5,
+          "seconds": 11.25,
+          "text": "thing",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 16.75,
+          "seconds": 11.4205,
+          "text": "looked",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 17.0,
+          "seconds": 11.5909,
+          "text": "bleak?",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 20.0,
+          "seconds": 13.6364,
+          "text": "What",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 20.25,
+          "seconds": 13.8069,
+          "text": "did",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 20.5,
+          "seconds": 13.9773,
+          "text": "Sir",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 20.75,
+          "seconds": 14.1478,
+          "text": "Ed",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 21.0,
+          "seconds": 14.3182,
+          "text": "mund",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 21.25,
+          "seconds": 14.4886,
+          "text": "say",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 21.5,
+          "seconds": 14.6591,
+          "text": "to",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 21.75,
+          "seconds": 14.8296,
+          "text": "Ten",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 22.0,
+          "seconds": 15.0,
+          "text": "zing",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 22.25,
+          "seconds": 15.1705,
+          "text": "as",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 22.5,
+          "seconds": 15.3409,
+          "text": "they",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 22.75,
+          "seconds": 15.5114,
+          "text": "strug",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 23.0,
+          "seconds": 15.6818,
+          "text": "gled",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 23.25,
+          "seconds": 15.8523,
+          "text": "t'ward",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 23.5,
+          "seconds": 16.0227,
+          "text": "Ev",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 23.75,
+          "seconds": 16.1932,
+          "text": "er",
+          "syllabic": "middle"
+        },
+        {
+          "quarter": 24.0,
+          "seconds": 16.3636,
+          "text": "est's",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 25.0,
+          "seconds": 17.0454,
+          "text": "peak?",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 28.0,
+          "seconds": 19.0909,
+          "text": "What",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 29.0,
+          "seconds": 19.7727,
+          "text": "did",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 29.3333,
+          "seconds": 20.0,
+          "text": "Wash",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 29.6667,
+          "seconds": 20.2273,
+          "text": "ing",
+          "syllabic": "middle"
+        },
+        {
+          "quarter": 30.0,
+          "seconds": 20.4545,
+          "text": "ton",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 30.3333,
+          "seconds": 20.6818,
+          "text": "say",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 30.6667,
+          "seconds": 20.9091,
+          "text": "to",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 31.0,
+          "seconds": 21.1363,
+          "text": "his",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 32.0,
+          "seconds": 21.8182,
+          "text": "troops",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 33.0,
+          "seconds": 22.5,
+          "text": "as",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 33.5,
+          "seconds": 22.8409,
+          "text": "they",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 35.0,
+          "seconds": 23.8636,
+          "text": "crossed",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 37.0,
+          "seconds": 25.2273,
+          "text": "the",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 37.5,
+          "seconds": 25.5682,
+          "text": "Del",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 38.0,
+          "seconds": 25.9091,
+          "text": "a",
+          "syllabic": "middle"
+        },
+        {
+          "quarter": 38.5,
+          "seconds": 26.25,
+          "text": "ware?",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 39.5,
+          "seconds": 26.9318,
+          "text": "I'm",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 40.0,
+          "seconds": 27.2727,
+          "text": "sure",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 40.5,
+          "seconds": 27.6136,
+          "text": "you're",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 41.0,
+          "seconds": 27.9546,
+          "text": "well",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 41.25,
+          "seconds": 28.125,
+          "text": "a",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 41.5,
+          "seconds": 28.2955,
+          "text": "ware!",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 46.0,
+          "seconds": 31.3637,
+          "text": "We",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 46.5,
+          "seconds": 31.7046,
+          "text": "can",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 47.0,
+          "seconds": 32.0455,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 47.5,
+          "seconds": 32.334,
+          "text": "it!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 49.0,
+          "seconds": 33.1993,
+          "text": "We",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 50.0,
+          "seconds": 33.7762,
+          "text": "can",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 51.0,
+          "seconds": 34.3531,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 51.5,
+          "seconds": 34.6416,
+          "text": "it!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 53.0,
+          "seconds": 35.507,
+          "text": "We",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 54.0,
+          "seconds": 36.0839,
+          "text": "can",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 55.0,
+          "seconds": 36.6608,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 56.0,
+          "seconds": 37.2378,
+          "text": "it,",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 57.0,
+          "seconds": 37.8147,
+          "text": "me",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 58.0,
+          "seconds": 38.3916,
+          "text": "and",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 59.0,
+          "seconds": 38.9685,
+          "text": "you!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 61.0,
+          "seconds": 40.1224,
+          "text": "We",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 62.0,
+          "seconds": 40.6993,
+          "text": "can",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 63.0,
+          "seconds": 41.2762,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 63.5,
+          "seconds": 41.5647,
+          "text": "it!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 65.0,
+          "seconds": 42.4301,
+          "text": "We",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 66.0,
+          "seconds": 43.007,
+          "text": "can",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 67.0,
+          "seconds": 43.5839,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 67.5,
+          "seconds": 43.8724,
+          "text": "it!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 69.0,
+          "seconds": 44.7378,
+          "text": "We",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 70.0,
+          "seconds": 45.3147,
+          "text": "can",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 71.0,
+          "seconds": 45.8916,
+          "text": "make",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 72.0,
+          "seconds": 46.4685,
+          "text": "our",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 73.0,
+          "seconds": 47.0455,
+          "text": "dreams",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 74.0,
+          "seconds": 47.6224,
+          "text": "come",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 75.0,
+          "seconds": 48.1993,
+          "text": "true!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 78.0,
+          "seconds": 49.93,
+          "text": "Ev'",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 78.5,
+          "seconds": 50.2185,
+          "text": "ry",
+          "syllabic": "middle"
+        },
+        {
+          "quarter": 79.0,
+          "seconds": 50.507,
+          "text": "thing",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 80.0,
+          "seconds": 51.0839,
+          "text": "you've",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 81.0,
+          "seconds": 51.6608,
+          "text": "ev",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 82.0,
+          "seconds": 52.2378,
+          "text": "er",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 83.0,
+          "seconds": 52.8147,
+          "text": "want",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 83.5,
+          "seconds": 53.1031,
+          "text": "ed",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 85.5,
+          "seconds": 54.257,
+          "text": "is",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 86.5,
+          "seconds": 54.8339,
+          "text": "just",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 87.0,
+          "seconds": 55.1224,
+          "text": "wait",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 88.0,
+          "seconds": 55.6993,
+          "text": "ing",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 89.0,
+          "seconds": 56.2762,
+          "text": "to",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 90.0,
+          "seconds": 56.8531,
+          "text": "be",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 91.0,
+          "seconds": 57.4301,
+          "text": "had",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 95.0,
+          "seconds": 59.7378,
+          "text": "Beau",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 95.5,
+          "seconds": 60.0262,
+          "text": "ti",
+          "syllabic": "middle"
+        },
+        {
+          "quarter": 96.0,
+          "seconds": 60.3147,
+          "text": "ful",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 96.5,
+          "seconds": 60.6031,
+          "text": "girls",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 98.0,
+          "seconds": 61.4685,
+          "text": "wear",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 98.5,
+          "seconds": 61.757,
+          "text": "ing",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 99.0,
+          "seconds": 62.0455,
+          "text": "no",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 99.5,
+          "seconds": 62.334,
+          "text": "thing",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 100.0,
+          "seconds": 62.6224,
+          "text": "but",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 100.5,
+          "seconds": 62.9108,
+          "text": "pearls",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 102.0,
+          "seconds": 63.7762,
+          "text": "Ca",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 103.0,
+          "seconds": 64.3531,
+          "text": "ress",
+          "syllabic": "middle"
+        },
+        {
+          "quarter": 103.5,
+          "seconds": 64.6416,
+          "text": "ing",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 104.0,
+          "seconds": 64.93,
+          "text": "you",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 104.5,
+          "seconds": 65.2185,
+          "text": "un",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 105.0,
+          "seconds": 65.507,
+          "text": "dress",
+          "syllabic": "middle"
+        },
+        {
+          "quarter": 105.5,
+          "seconds": 65.7955,
+          "text": "ing",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 106.0,
+          "seconds": 66.0839,
+          "text": "you",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 106.5,
+          "seconds": 66.3723,
+          "text": "and",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 107.0,
+          "seconds": 66.6608,
+          "text": "driv",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 107.5,
+          "seconds": 66.9493,
+          "text": "ing",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 108.0,
+          "seconds": 67.2378,
+          "text": "you",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 108.5,
+          "seconds": 67.5262,
+          "text": "mad!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 110.0,
+          "seconds": 68.3916,
+          "text": "We",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 110.5,
+          "seconds": 68.6801,
+          "text": "can",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 111.0,
+          "seconds": 68.9685,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 111.5,
+          "seconds": 69.257,
+          "text": "it!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 113.0,
+          "seconds": 70.1224,
+          "text": "We",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 114.0,
+          "seconds": 70.6993,
+          "text": "can",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 115.0,
+          "seconds": 71.2762,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 115.5,
+          "seconds": 71.5647,
+          "text": "it!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 117.0,
+          "seconds": 72.4301,
+          "text": "This",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 118.0,
+          "seconds": 73.007,
+          "text": "is",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 119.0,
+          "seconds": 73.5839,
+          "text": "not",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 120.0,
+          "seconds": 74.1608,
+          "text": "the",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 121.0,
+          "seconds": 74.7378,
+          "text": "time",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 122.0,
+          "seconds": 75.3147,
+          "text": "to",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 123.0,
+          "seconds": 75.8916,
+          "text": "shirk!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 125.5,
+          "seconds": 77.334,
+          "text": "We",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 126.5,
+          "seconds": 77.9108,
+          "text": "can",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 127.0,
+          "seconds": 78.1993,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 127.5,
+          "seconds": 78.4877,
+          "text": "it!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 129.0,
+          "seconds": 79.3531,
+          "text": "You",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 129.5,
+          "seconds": 79.6416,
+          "text": "won't",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 131.0,
+          "seconds": 80.507,
+          "text": "rue",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 131.5,
+          "seconds": 80.7955,
+          "text": "it",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 134.0,
+          "seconds": 82.2378,
+          "text": "say",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 134.5,
+          "seconds": 82.5262,
+          "text": "\"good",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 135.0,
+          "seconds": 82.8147,
+          "text": "bye\"",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 136.0,
+          "seconds": 83.3916,
+          "text": "to",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 137.0,
+          "seconds": 83.9685,
+          "text": "pet",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 138.0,
+          "seconds": 84.5455,
+          "text": "ty",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 139.0,
+          "seconds": 85.1224,
+          "text": "clerk!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 141.5,
+          "seconds": 86.5647,
+          "text": "Hi,",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 142.5,
+          "seconds": 87.1416,
+          "text": "pro",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 143.0,
+          "seconds": 87.4301,
+          "text": "du",
+          "syllabic": "middle"
+        },
+        {
+          "quarter": 143.5,
+          "seconds": 87.7185,
+          "text": "cer!",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 145.0,
+          "seconds": 88.5839,
+          "text": "Yes",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 146.0,
+          "seconds": 89.1608,
+          "text": "pro",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 147.0,
+          "seconds": 89.7378,
+          "text": "du",
+          "syllabic": "middle"
+        },
+        {
+          "quarter": 147.5,
+          "seconds": 90.0262,
+          "text": "cer!",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 149.0,
+          "seconds": 90.8916,
+          "text": "I",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 150.0,
+          "seconds": 91.4685,
+          "text": "mean",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 151.0,
+          "seconds": 92.0455,
+          "text": "you",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 152.0,
+          "seconds": 92.6224,
+          "text": "sir,",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 153.0,
+          "seconds": 93.1993,
+          "text": "go",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 154.0,
+          "seconds": 93.7762,
+          "text": "be",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 155.0,
+          "seconds": 94.3531,
+          "text": "serk!",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 157.5,
+          "seconds": 95.7955,
+          "text": "We",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 158.5,
+          "seconds": 96.3723,
+          "text": "can",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 159.0,
+          "seconds": 96.6608,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 159.5,
+          "seconds": 96.9493,
+          "text": "it!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 161.0,
+          "seconds": 97.8147,
+          "text": "We",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 162.0,
+          "seconds": 98.3916,
+          "text": "can",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 163.0,
+          "seconds": 98.9685,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 163.5,
+          "seconds": 99.257,
+          "text": "it!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 166.0,
+          "seconds": 100.6993,
+          "text": "And",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 166.5,
+          "seconds": 100.9878,
+          "text": "I",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 167.0,
+          "seconds": 101.2762,
+          "text": "know",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 169.0,
+          "seconds": 102.4301,
+          "text": "it's",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 171.0,
+          "seconds": 103.5839,
+          "text": "gon",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 173.0,
+          "seconds": 104.7378,
+          "text": "na",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 175.0,
+          "seconds": 105.8916,
+          "text": "work!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 178.0,
+          "seconds": 107.4867,
+          "text": "What",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 178.3333,
+          "seconds": 107.6337,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 178.6667,
+          "seconds": 107.7808,
+          "text": "I",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 179.0,
+          "seconds": 107.9279,
+          "text": "say?",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 181.0,
+          "seconds": 108.8102,
+          "text": "Fin",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 181.3333,
+          "seconds": 108.9573,
+          "text": "'lly",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 181.6667,
+          "seconds": 109.1043,
+          "text": "a",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 182.0,
+          "seconds": 109.2514,
+          "text": "chance",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 182.3333,
+          "seconds": 109.3984,
+          "text": "to",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 182.6667,
+          "seconds": 109.5455,
+          "text": "be",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 183.0,
+          "seconds": 109.6925,
+          "text": "a",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 183.3333,
+          "seconds": 109.8396,
+          "text": "Broad",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 183.6667,
+          "seconds": 109.9867,
+          "text": "way",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 184.0,
+          "seconds": 110.1337,
+          "text": "pro",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 185.0,
+          "seconds": 110.5749,
+          "text": "du-cer",
+          "syllabic": "end"
+        },
+        {
+          "quarter": 190.0,
+          "seconds": 112.7808,
+          "text": "What",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 190.3333,
+          "seconds": 112.9278,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 190.6667,
+          "seconds": 113.0749,
+          "text": "I",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 191.0,
+          "seconds": 113.2219,
+          "text": "say?",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 193.0,
+          "seconds": 114.1043,
+          "text": "Fin",
+          "syllabic": "begin"
+        },
+        {
+          "quarter": 193.3333,
+          "seconds": 114.2514,
+          "text": "'lly",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 193.6667,
+          "seconds": 114.3984,
+          "text": "a",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 194.0,
+          "seconds": 114.5455,
+          "text": "chance",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 194.3333,
+          "seconds": 114.6925,
+          "text": "to",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 194.6667,
+          "seconds": 114.8396,
+          "text": "make",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 195.0,
+          "seconds": 114.9866,
+          "text": "my",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 195.3333,
+          "seconds": 115.1337,
+          "text": "dream",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 195.6667,
+          "seconds": 115.2808,
+          "text": "come",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 196.0,
+          "seconds": 115.4278,
+          "text": "true",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 197.0,
+          "seconds": 115.869,
+          "text": "sir",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 202.0,
+          "seconds": 118.0749,
+          "text": "What",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 202.3333,
+          "seconds": 118.2219,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 202.6667,
+          "seconds": 118.369,
+          "text": "I",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 203.0,
+          "seconds": 118.5161,
+          "text": "say?",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 205.0,
+          "seconds": 119.3984,
+          "text": "What",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 205.3333,
+          "seconds": 119.5455,
+          "text": "do",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 205.6667,
+          "seconds": 119.6925,
+          "text": "I",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 206.0,
+          "seconds": 119.8396,
+          "text": "say?",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 206.3333,
+          "seconds": 119.9866,
+          "text": "Here's",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 206.6667,
+          "seconds": 120.1337,
+          "text": "what",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 207.0,
+          "seconds": 120.2807,
+          "text": "I",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 207.3333,
+          "seconds": 120.4278,
+          "text": "say",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 207.6667,
+          "seconds": 120.5749,
+          "text": "to",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 208.0,
+          "seconds": 120.7219,
+          "text": "you,",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 209.0,
+          "seconds": 121.1631,
+          "text": "sir!",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 212.0,
+          "seconds": 122.4866,
+          "text": "I",
+          "syllabic": "single"
+        },
+        {
+          "quarter": 212.5,
+          "seconds": 122.7072,
+          "text": "can't",
+          "syllabic": "single"
+        }
+      ]
+    },
+    {
+      "id": "01-piano",
+      "name": "Piano",
+      "group": "instrument",
+      "midiProgram": 0,
+      "midiFile": "parts/01-piano.mid",
+      "lyrics": []
+    }
+  ]
+}
